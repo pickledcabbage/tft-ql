@@ -31,7 +31,7 @@ class Transform:
         return TransformType.SINGLE
 
 @define
-class Traverse(Transform):
+class Index(Transform):
     path: list[str] = field(converter=lambda x: x.split('.'))
 
     @override
@@ -310,8 +310,8 @@ class BaseQuery(Query):
     
 
     # START Transforms.
-    def trav(self, path: str) -> Self:
-        return self._evolve(Traverse(path))
+    def idx(self, path: str) -> Self:
+        return self._evolve(Index(path))
     
     def map(self, query: Query, key_func: Callable[[Any], Any] = identity) -> Self:
         return self._evolve(Map(query, key_func))
@@ -404,8 +404,8 @@ class BaseQuery(Query):
 def query(m: dict | None = None) -> BaseQuery:
     return BaseQuery(m)
 
-def trav(path: str) -> BaseQuery:
-    return query().trav(path)
+def idx(path: str) -> BaseQuery:
+    return query().idx(path)
 
 def map(_query: Query, key_func: Callable[[Any], Any] = identity) -> BaseQuery:
     return query().map(_query, key_func)
