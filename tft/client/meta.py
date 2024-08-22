@@ -13,6 +13,6 @@ URLS = {
 }
 
 class MetaTFTClient:
-    def query(self, api: MetaTFTApis) -> dict:
-        """Queries given API and returns a dict."""
+    def fetch(self, api: MetaTFTApis) -> dict:
+        """Fetches given API and returns a dict."""
         return requests.get(URLS[api]).json()

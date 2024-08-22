@@ -70,6 +70,19 @@ class Top(Transform):
         return m[0:self.num] if not self.reverse else m[-self.num:]
 
 @define
+class Split(Transform):
+    delim: str = field(default=',')
+
+    @override
+    def transform(self, m: Any) -> Any:
+        assert isinstance(m, str), "Can only use split() on a string"
+        return m.split(self.delim)
+    
+    @override
+    def get_type(self) -> TransformType:
+        return TransformType.MULTI_LIST
+
+@define
 class Result:
     value: Any | None = field(default=None)
     results: dict | list | None = field(default = None)
@@ -131,6 +144,9 @@ class Query:
     def top(self, num: int = 1, reverse: bool = False) -> Self:
         return self._evolve(Top(num, reverse))
     
+    def split(self, delim: str = ',') -> Self:
+        return self._evolve(Split(delim))
+    
     def eval(self) -> Any:
         result = Result(self.m)
         for transform in self.transforms:
@@ -140,3 +156,6 @@ class Query:
     
     def splay(self, depth: int | None = None) -> None:
         splay(self.eval(), depth=depth)
+
+def query(m: dict) -> Query:
+    return Query(m)
