@@ -1,21 +1,29 @@
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Callable, Self, override
+from typing import Any, Callable, Iterable, Self, override
 from attrs import define, field, evolve
 from tft.ql.util import splay
+
+__all__ = [
+    "query", "select", "map", "top", "split", "sub", "filter"
+]
 
 def identity(x: Any) -> Any:
     return x
 
+# Forward declaration.
+class Query:
+    def eval(self, m: Any) -> Any:
+        raise NotImplemented('Need to implement query')
+
 class TransformType(Enum):
     SINGLE = 'single'
-    MULTI_LIST = 'multi_list'
-    MULTI_DICT = 'multi_dict'
+    MULTI = 'multi'
 
 @define
 class Transform:
     @abstractmethod
-    def transform(self, _m: dict) -> Any:
+    def transform(self, m: Any) -> Any:
         raise NotImplemented('Need to implement transform')
 
     @abstractmethod
@@ -23,7 +31,7 @@ class Transform:
         return TransformType.SINGLE
 
 @define
-class Select(Transform):
+class Traverse(Transform):
     path: list[str] = field(converter=lambda x: x.split('.'))
 
     @override
@@ -44,20 +52,21 @@ class Select(Transform):
 
 @define
 class Map(Transform):
+    query: Query = field(default=Query())
     key_func: Callable[[Any], Any] = field(default=identity)
-    # val_func: Callable[[Any], Any] = field(default=identity)
+
     @override
     def transform(self, m: dict | list) -> dict[Any, Any]:
         if isinstance(m, list):
-            return {self.key_func(idx): m[idx] for idx in range(len(m))}
+            return {self.key_func(idx): self.query.eval(m[idx]) for idx in range(len(m))}
         elif isinstance(m, dict):
-            return {self.key_func(key): val for key, val in m.items()}
+            return {self.key_func(key): self.query.eval(val) for key, val in m.items()}
         else:
             raise Exception(f"Mapping incorrect type: {type(m)}")
     
-    @override
-    def get_type(self) -> TransformType:
-        return TransformType.MULTI_DICT
+    # @override
+    # def get_type(self) -> TransformType:
+    #     return TransformType.MULTI
 
 @define
 class Top(Transform):
@@ -78,9 +87,155 @@ class Split(Transform):
         assert isinstance(m, str), "Can only use split() on a string"
         return m.split(self.delim)
     
-    @override
+    # @override
+    # def get_type(self) -> TransformType:
+    #     return TransformType.MULTI
+
+@define
+class SubQuery(Transform):
+    query_map: dict[Any, Query] = field()
+
+    def transform(self, m: dict) -> Any:
+        assert isinstance(m, dict), "Can only sub query a dict"
+        output = {}
+        for key, query in self.query_map.items():
+            assert key in m, f"Key {key} not found for subquery. Available keys: {m.keys()}"
+            output[key] = query.eval(m[key])
+        return output
+    
     def get_type(self) -> TransformType:
-        return TransformType.MULTI_LIST
+        return TransformType.SINGLE
+
+@define
+class LessThan(Transform):
+    other: Any = field()
+
+    def transform(self, m: Any) -> bool:
+        return m < self.other
+
+@define
+class LessThanEqual(Transform):
+    other: Any = field()
+
+    def transform(self, m: Any) -> bool:
+        return m <= self.other
+
+@define
+class GreaterThan(Transform):
+    other: Any = field()
+
+    def transform(self, m: Any) -> bool:
+        return m > self.other
+    
+@define
+class GreaterThanEqual(Transform):
+    other: Any = field()
+
+    def transform(self, m: Any) -> bool:
+        return m >= self.other
+
+@define
+class Equal(Transform):
+    other: Any = field()
+
+    def transform(self, m: Any) -> bool:
+        return m == self.other
+
+@define
+class NotEqual(Transform):
+    other: Any = field()
+
+    def transform(self, m: Any) -> bool:
+        return m != self.other
+
+@define
+class Negate(Transform):
+    def transform(self, m: Any) -> Any:
+        return not m
+
+@define
+class Filter(Transform):
+    query: Query = field()
+
+    def transform(self, m: Any) -> Any:
+        if isinstance(m, list):
+            return [val for val in m if bool(self.query.eval(val))]
+        elif isinstance(m, dict):
+            return {k: v for k, v in m.items() if bool(self.query.eval(v))}
+        else:
+            raise Exception(f"Can only filter on list or dict: {type(m)}")
+
+    # def get_type(self) -> TransformType:
+    #     return TransformType.MULTI
+
+@define
+class Length(Transform):
+    def transform(self, m: Any) -> Any:
+        return len(m)
+
+@define
+class Contains(Transform):
+    other: Any = field()
+
+    def transform(self, m: Any) -> bool:
+        return self.other in m
+
+@define
+class InSet(Transform):
+    other: Any = field()
+
+    def transform(self, m: Any) -> Any:
+        return m in self.other
+
+@define
+class Select(Transform):
+    fields: Iterable = field()
+
+    def transform(self, m: Any) -> Any:
+        if isinstance(m, list):
+            return [m[field] for field in self.fields]
+        elif isinstance(m ,dict):
+            return {field: m[field] for field in self.fields}
+        else:
+            raise Exception(f"Can only use with on lists and dicts: {type(m)}")
+
+@define
+class Flatten(Transform):
+    layers: int = field(default=1)
+
+    def transform(self, m: Any) -> list[Any]:
+        output = []
+        assert isinstance(m, list), "Can only flatten a list"
+
+        def recurse(v, level):
+            if level > self.layers:
+                output.append(v)
+                return
+            if not isinstance(v, list):
+                output.append(v)
+                return
+            for i in v:
+                recurse(i, level + 1)
+        recurse(m, 0)
+        return output
+
+@define
+class Unique(Transform):
+    def transform(self, m: Any) -> list[Any]:
+        assert isinstance(m, list), f"Can only use unique on lists: {type(m)}"
+        return list(set(m))
+
+@define
+class Keys(Transform):
+    def transform(self, m: Any) -> list[Any]:
+        assert isinstance(m, dict), f"Can only use keys on dicts: {type(m)}"
+        return list(m.keys())
+
+@define
+class Values(Transform):
+    def transform(self, m: Any) -> list[Any]:
+        assert isinstance(m, dict), f"Can only use values on dicts: {type(m)}"
+        return list(m.values())
 
 @define
 class Result:
@@ -110,14 +265,16 @@ class Result:
             match t_type:
                 case TransformType.SINGLE:
                     self.value = transform.transform(self.value)
-                case TransformType.MULTI_DICT:
+                case TransformType.MULTI:
                     temp = transform.transform(self.value)
-                    self.value = None
-                    self.results = {k: Result(value=v) for k,v in temp.items()}
-                case TransformType.MULTI_LIST:
-                    temp = transform.transform(self.value)
-                    self.value = None
-                    self.results = [Result(value=v) for v in temp]
+                    if isinstance(temp, dict):
+                        self.value = None
+                        self.results = {k: Result(value=v) for k,v in temp.items()}
+                    elif isinstance(temp, list):
+                        self.value = None
+                        self.results = [Result(value=v) for v in temp]
+                    else:
+                        raise Exception(f"Getting multi-result on bad type: {type(temp)}")
     
     def to_dict(self) -> Any:
         if self.is_val():
@@ -127,19 +284,28 @@ class Result:
             return {k: v.to_dict() for k, v in self.results.items()}
         return [v.to_dict() for v in self.results]
 
+# Should only be used by Query to represent an empty dataset.
+class EmptyDataset:
+    pass
+
 @define
-class Query:
-    m: dict = field()
+class BaseQuery(Query):
+    m: Any | EmptyDataset = field(factory=EmptyDataset)
     transforms: list[Transform] = field(factory=list)
+
+    def empty(self) -> bool:
+        return isinstance(self.m, EmptyDataset)
 
     def _evolve(self, transform: Transform) -> Self:
         return evolve(self, m=self.m, transforms=self.transforms + [transform])
-
-    def select(self, path: str) -> Self:
-        return self._evolve(Select(path))
     
-    def map(self, key_func: Callable[[Any], Any] = identity) -> Self:
-        return self._evolve(Map(key_func))
+
+    # START Transforms.
+    def trav(self, path: str) -> Self:
+        return self._evolve(Traverse(path))
+    
+    def map(self, query: Query, key_func: Callable[[Any], Any] = identity) -> Self:
+        return self._evolve(Map(query, key_func))
     
     def top(self, num: int = 1, reverse: bool = False) -> Self:
         return self._evolve(Top(num, reverse))
@@ -147,8 +313,72 @@ class Query:
     def split(self, delim: str = ',') -> Self:
         return self._evolve(Split(delim))
     
-    def eval(self) -> Any:
-        result = Result(self.m)
+    def sub(self, sub_queries: dict[Any, Query]) -> Self:
+        return self._evolve(SubQuery(sub_queries))
+    
+    def filter(self, query: Query) -> Self:
+        return self._evolve(Filter(query))
+    
+    def len(self) -> Self:
+        return self._evolve(Length())
+    
+    def length(self) -> Self:
+        return self.len()
+    
+    def select(self, fields: Iterable) -> Self:
+        return self._evolve(Select(fields))
+    
+    def contains(self, other) -> Self:
+        return self._evolve(Contains(other))
+    
+    def in_set(self, other) -> Self:
+        return self._evolve(InSet(other))
+    
+    def flatten(self, layers: int = 1) -> Self:
+        return self._evolve(Flatten(layers))
+    
+    def uniq(self) -> Self:
+        return self._evolve(Unique())
+    
+    def keys(self) -> Self:
+        return self._evolve(Keys())
+    
+    def vals(self) -> Self:
+        return self._evolve(Values())
+    
+    def values(self) -> Self:
+        return self.values()
+    
+    # Comparison ops.
+    def lt(self, other) -> Self:
+        return self._evolve(LessThan(other))
+    
+    def le(self, other) -> Self:
+        return self._evolve(LessThanEqual(other))
+    
+    def gt(self, other) -> Self:
+        return self._evolve(GreaterThan(other))
+    
+    def ge(self, other) -> Self:
+        return self._evolve(GreaterThanEqual(other))
+
+    def eq(self, other) -> Self:
+        return self._evolve(Equal(other))
+    
+    def ne(self, other) -> Self:
+        return self._evolve(Equal(other))
+    
+    def neg(self) -> Self:
+        return self._evolve(Negate())
+
+    # END Transforms.
+    
+    def eval(self, m: Any | None = None) -> Any:
+        assert not self.empty() or m is not None, "Need dataset to evaluate on."
+        # Passed `m` should override.
+        if m is None:
+            m = self.m
+        result = Result(m)
         for transform in self.transforms:
             result.update(transform)
         
@@ -157,5 +387,52 @@ class Query:
     def splay(self, depth: int | None = None) -> None:
         splay(self.eval(), depth=depth)
 
-def query(m: dict) -> Query:
-    return Query(m)
+# Public functions
+
+def query(m: dict | None = None) -> BaseQuery:
+    return BaseQuery(m)
+
+def trav(path: str) -> BaseQuery:
+    return query().trav(path)
+
+def map(_query: Query, key_func: Callable[[Any], Any] = identity) -> BaseQuery:
+    return query().map(_query, key_func)
+
+def top(num: int = 1, reverse: bool = False) -> BaseQuery:
+    return query().top(num, reverse)
+
+def split(delim: str = ',') -> BaseQuery:
+    return query().split(delim)
+
+def sub(sub_queries: dict[Any, Query]) -> BaseQuery:
+    return query().sub(sub_queries)
+
+def filter(_query: Query) -> BaseQuery:
+    return query().filter(_query)
+
+def length() -> BaseQuery:
+    return query().len()
+
+def select(fields: Iterable) -> BaseQuery:
+    return query().select(fields)
+
+def contains(other) -> BaseQuery:
+    return query().contains(other)
+
+def flatten(layers: int = 1) -> BaseQuery:
+    return query().flatten(layers)
+
+def uniq() -> BaseQuery:
+    return query().uniq()
+
+def keys() -> BaseQuery:
+    return query().keys()
+
+def vals() -> BaseQuery:
+    return query().vals()
+
+def neg() -> BaseQuery:
+    return query().neg()
+
+def in_set() -> BaseQuery:
+    return query().in_set()
