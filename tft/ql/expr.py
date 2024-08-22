@@ -238,6 +238,15 @@ class Values(Transform):
         return list(m.values())
 
 @define
+class SortBy(Transform):
+    query: Query = field()
+    reverse: bool = field()
+
+    def transform(self, m: Any) -> Any:
+        assert isinstance(m, list), f"Can only sort lists {type(m)}"
+        return sorted(m, key=lambda x: self.query.eval(x), reverse=self.reverse)
+
+@define
 class Result:
     value: Any | None = field(default=None)
     results: dict | list | None = field(default = None)
@@ -349,6 +358,9 @@ class BaseQuery(Query):
     def values(self) -> Self:
         return self.values()
     
+    def sort_by(self, query: Query, reverse: bool) -> Self:
+        return self._evolve(SortBy(query, reverse))
+    
     # Comparison ops.
     def lt(self, other) -> Self:
         return self._evolve(LessThan(other))
@@ -434,5 +446,8 @@ def vals() -> BaseQuery:
 def neg() -> BaseQuery:
     return query().neg()
 
-def in_set() -> BaseQuery:
-    return query().in_set()
+def sort_by(_query: Query, reverse: bool = False) -> BaseQuery:
+    return query().sort_by(_query, reverse)
+
+def in_set(other) -> BaseQuery:
+    return query().in_set(other)
