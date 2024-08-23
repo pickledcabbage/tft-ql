@@ -28,6 +28,24 @@ c
     5
 ```
 
+### `.pp(int)`
+Pretty print command prints the dictionary in a formatted way. The parameter indicates how much you want each level to be indented. This is a terminating command, you cannot follow it with more operations.
+```
+>>> d = {"a": [{"b": 3, "d": 4}], "c": {"e": 5}}
+>>> ql.query(d).pp()
+{
+  "a": [
+    {
+      "b": 3,
+      "d": 4
+    }
+  ],
+  "c": {
+    "e": 5
+  }
+}
+```
+
 ## Common
 ### `.idx(str)`
 The index operation lets you select a field in a dictionary or list. This can be chained using the delimiter `.` between fields in the path you want to index into.
@@ -101,7 +119,12 @@ Given a list of objects, returns only the unique ones.
 
 ## Advanced
 ### `.sub(dict[Any, Query])`
-Given a dictionary of keys to queries, returns back a dictionary of keys to each of those queries applied to the current dictionary. No example yet, needs to be fixed.
+Given a dictionary of keys to queries, returns back a dictionary of keys to each of those queries applied to the current dictionary.
+```
+>>> d = {"a": [1, 2, 3], "b": {"c": 4}}
+>>> ql.query(d).sub({"x": ql.idx("a.0"), "y": ql.idx("b.c")}).eval()
+{'x': 1, 'y': 4}
+```
 
 ### `.filter(Query)`
 Applies a query to each value in a list or dictionary and only keeps that values for which the query evaluates to true. See logic operators for how to contruct a boolean query.

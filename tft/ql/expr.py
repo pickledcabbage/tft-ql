@@ -1,12 +1,9 @@
 from abc import abstractmethod
 from enum import Enum
+import json
 from typing import Any, Callable, Iterable, Self, override
 from attrs import define, field, evolve
 from tft.ql.util import splay
-
-__all__ = [
-    "query", "select", "map", "top", "split", "sub", "filter"
-]
 
 def identity(x: Any) -> Any:
     return x
@@ -96,11 +93,9 @@ class SubQuery(Transform):
     query_map: dict[Any, Query] = field()
 
     def transform(self, m: dict) -> Any:
-        assert isinstance(m, dict), "Can only sub query a dict"
         output = {}
         for key, query in self.query_map.items():
-            assert key in m, f"Key {key} not found for subquery. Available keys: {m.keys()}"
-            output[key] = query.eval(m[key])
+            output[key] = query.eval(m)
         return output
     
     def get_type(self) -> TransformType:
@@ -152,6 +147,22 @@ class NotEqual(Transform):
 class Negate(Transform):
     def transform(self, m: Any) -> Any:
         return not m
+
+@define
+class Any(Transform):
+    queries: Iterable[Query] = field()
+
+    @override
+    def transform(self, m: Any) -> bool:
+        return any(query.eval(m) for query in self.queries)
+
+@define
+class All(Transform):
+    queries: Iterable[Query] = field()
+
+    @override
+    def transform(self, m: Any) -> bool:
+        return all(query.eval(m) for query in self.queries)
 
 @define
 class Filter(Transform):
@@ -356,7 +367,7 @@ class BaseQuery(Query):
         return self._evolve(Values())
     
     def values(self) -> Self:
-        return self.values()
+        return self.vals()
     
     def sort_by(self, query: Query, reverse: bool) -> Self:
         return self._evolve(SortBy(query, reverse))
@@ -383,6 +394,15 @@ class BaseQuery(Query):
     def neg(self) -> Self:
         return self._evolve(Negate())
 
+    # Boolean operators.
+
+    def all(self, queries: Iterable[Query]) -> Self:
+        return self._evolve(All(queries))
+    
+    def any(self, queries: Iterable[Query]) -> Self:
+        return self._evolve(Any(queries))
+    
+
     # END Transforms.
     
     def eval(self, m: Any | None = None) -> Any:
@@ -398,6 +418,9 @@ class BaseQuery(Query):
     
     def splay(self, depth: int | None = None) -> None:
         splay(self.eval(), depth=depth)
+    
+    def pp(self, indent: int = 2) -> None:
+        print(json.dumps(self.eval(), indent=indent))
 
 # Public functions
 
@@ -445,6 +468,12 @@ def vals() -> BaseQuery:
 
 def neg() -> BaseQuery:
     return query().neg()
+
+def all(queries: Iterable[Query]) -> BaseQuery:
+    return query().all(queries)
+
+def any(queries: Iterable[Query]) -> BaseQuery:
+    return query().any(queries)
 
 def sort_by(_query: Query, reverse: bool = False) -> BaseQuery:
     return query().sort_by(_query, reverse)
