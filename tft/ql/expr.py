@@ -4,6 +4,7 @@ import json
 from typing import Any, Callable, Iterable, Self, override
 from attrs import define, field, evolve
 from tft.ql.util import splay
+import pandas as pd
 
 def identity(x: Any) -> Any:
     return x
@@ -50,14 +51,21 @@ class Index(Transform):
 @define
 class Map(Transform):
     query: Query = field(default=Query())
-    key_func: Callable[[Any], Any] = field(default=identity)
+    key_query: Query | None = field(default=None)
 
     @override
     def transform(self, m: dict | list) -> dict[Any, Any]:
+        key_func = identity if self.key_query is None else self.query.eval
         if isinstance(m, list):
-            return {self.key_func(idx): self.query.eval(m[idx]) for idx in range(len(m))}
+            if self.key_query is not None:
+                return {self.key_query.eval(i): self.query.eval(i) for i in m}
+            else:
+                return {i: self.query.eval(m[i]) for i in range(len(m))}
         elif isinstance(m, dict):
-            return {self.key_func(key): self.query.eval(val) for key, val in m.items()}
+            if self.key_query is not None:
+                return {self.key_query.eval(val): self.query.eval(val) for val in m.values()}
+            else:
+                return {key_func(key): self.query.eval(val) for key, val in m.items()}
         else:
             raise Exception(f"Mapping incorrect type: {type(m)}")
     
@@ -211,6 +219,14 @@ class Select(Transform):
             raise Exception(f"Can only use with on lists and dicts: {type(m)}")
 
 @define
+class Replace(Transform):
+    mapping: dict = field()
+
+    def transform(self, m: Any) -> Any:
+        assert m in self.mapping, f"Value {m} is not in mapping: {self.mapping}"
+        return self.mapping[m]
+
+@define
 class Flatten(Transform):
     layers: int = field(default=1)
 
@@ -256,6 +272,13 @@ class SortBy(Transform):
     def transform(self, m: Any) -> Any:
         assert isinstance(m, list), f"Can only sort lists {type(m)}"
         return sorted(m, key=lambda x: self.query.eval(x), reverse=self.reverse)
+
+@define
+class Unary(Transform):
+    op: Callable[[Any], Any] = field()
+
+    def transform(self, m: Any) -> Any:
+        return self.op(m)
 
 @define
 class Result:
@@ -324,8 +347,8 @@ class BaseQuery(Query):
     def idx(self, path: str) -> Self:
         return self._evolve(Index(path))
     
-    def map(self, query: Query, key_func: Callable[[Any], Any] = identity) -> Self:
-        return self._evolve(Map(query, key_func))
+    def map(self, query: Query, key_query: Query | None = None) -> Self:
+        return self._evolve(Map(query, key_query))
     
     def top(self, num: int = 1, reverse: bool = False) -> Self:
         return self._evolve(Top(num, reverse))
@@ -369,8 +392,14 @@ class BaseQuery(Query):
     def values(self) -> Self:
         return self.vals()
     
-    def sort_by(self, query: Query, reverse: bool) -> Self:
+    def sort_by(self, query: Query, reverse: bool = False) -> Self:
         return self._evolve(SortBy(query, reverse))
+    
+    def unary(self, func: Callable) -> Self:
+        return self._evolve(Unary(func))
+    
+    def replace(self, mapping: dict) -> Self:
+        return self._evolve(Replace(mapping))
     
     # Comparison ops.
     def lt(self, other) -> Self:
@@ -421,6 +450,9 @@ class BaseQuery(Query):
     
     def pp(self, indent: int = 2) -> None:
         print(json.dumps(self.eval(), indent=indent))
+    
+    def to_pandas(self) -> pd.DataFrame:
+        return pd.DataFrame(self.eval())
 
 # Public functions
 
@@ -430,8 +462,8 @@ def query(m: dict | None = None) -> BaseQuery:
 def idx(path: str) -> BaseQuery:
     return query().idx(path)
 
-def map(_query: Query, key_func: Callable[[Any], Any] = identity) -> BaseQuery:
-    return query().map(_query, key_func)
+def map(_query: Query, key_query: Query | None = None) -> BaseQuery:
+    return query().map(_query, key_query)
 
 def top(num: int = 1, reverse: bool = False) -> BaseQuery:
     return query().top(num, reverse)
@@ -439,7 +471,7 @@ def top(num: int = 1, reverse: bool = False) -> BaseQuery:
 def split(delim: str = ',') -> BaseQuery:
     return query().split(delim)
 
-def sub(sub_queries: dict[Any, Query]) -> BaseQuery:
+def sub(sub_queries: dict) -> BaseQuery:
     return query().sub(sub_queries)
 
 def filter(_query: Query) -> BaseQuery:
@@ -477,6 +509,12 @@ def any(queries: Iterable[Query]) -> BaseQuery:
 
 def sort_by(_query: Query, reverse: bool = False) -> BaseQuery:
     return query().sort_by(_query, reverse)
+
+def unary(func: Callable) -> BaseQuery:
+    return query().unary(func)
+
+def replace(mapping: dict) -> BaseQuery:
+    return query().replace(mapping)
 
 def in_set(other) -> BaseQuery:
     return query().in_set(other)
