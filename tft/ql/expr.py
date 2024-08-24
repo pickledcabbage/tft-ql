@@ -9,6 +9,9 @@ import pandas as pd
 def identity(x: Any) -> Any:
     return x
 
+_all = all
+_any = any
+
 # Forward declaration.
 class Query:
     def eval(self, m: Any) -> Any:
@@ -54,13 +57,13 @@ class Map(Transform):
     key_query: Query | None = field(default=None)
 
     @override
-    def transform(self, m: dict | list) -> dict[Any, Any]:
+    def transform(self, m: dict | list) -> list | dict:
         key_func = identity if self.key_query is None else self.query.eval
         if isinstance(m, list):
             if self.key_query is not None:
                 return {self.key_query.eval(i): self.query.eval(i) for i in m}
             else:
-                return {i: self.query.eval(m[i]) for i in range(len(m))}
+                return [self.query.eval(i) for i in m]
         elif isinstance(m, dict):
             if self.key_query is not None:
                 return {self.key_query.eval(val): self.query.eval(val) for val in m.values()}
@@ -162,7 +165,7 @@ class Any(Transform):
 
     @override
     def transform(self, m: Any) -> bool:
-        return any(query.eval(m) for query in self.queries)
+        return _any(query.eval(m) for query in self.queries)
 
 @define
 class All(Transform):
@@ -170,7 +173,7 @@ class All(Transform):
 
     @override
     def transform(self, m: Any) -> bool:
-        return all(query.eval(m) for query in self.queries)
+        return _all(query.eval(m) for query in self.queries)
 
 @define
 class Filter(Transform):

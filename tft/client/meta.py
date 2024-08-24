@@ -20,7 +20,7 @@ class MetaTFTClient:
     def fetch(self, api: MetaTFTApis) -> dict:
         """Fetches given API and returns a dict."""
         if api == MetaTFTApis.CHAMP_ITEMS:
-            champ_ids = ql.query(self.fetch(MetaTFTApis.SET_DATA)).idx('units').filter(ql.idx('traits').len().gt(0)).map(ql.idx('apiName')).vals().eval()
+            champ_ids = ql.query(self.fetch(MetaTFTApis.SET_DATA)).idx('units').filter(ql.idx('traits').len().gt(0)).map(ql.idx('apiName')).eval()
             with multiprocessing.Pool(20) as pool:
                 all_champ_data = pool.map(self.fetch_champ, champ_ids)
             return {champ_id: champ_data for champ_id, champ_data in zip(champ_ids, all_champ_data)}
