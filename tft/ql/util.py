@@ -15,3 +15,11 @@ def splay(m: Any, layer: int = 0, depth: int | None =None) -> None:
             splay(m[0], layer + 1, depth)
     else:
         print(tab * layer + str(m))
+
+
+# Meta TFT specific.
+def avg_place(places: Any) -> Any:
+    """Given a list of placement counts, computes average placement.
+    [4, 6, 8, 10, 8, 6, 4, 10] => 4.714285714285714"""
+    tot = sum(places)
+    return sum((i+1) * x / tot for i, x in enumerate(places))

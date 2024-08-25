@@ -1,7 +1,10 @@
 from typing import Any, override
 from tft.interpreter.commands.registry import Command, ValidationException, register
-from tft.client.meta import MetaTFTClient, MetaTFTApis
+import tft.client.meta as meta
+from tft.queries.aliases import get_champ_aliases
+from tft.ql.util import avg_place
 import tft.ql.expr as ql
+from tft.queries.items import get_item_name_map
 
 __all__ = ["BestItems"]
 
@@ -12,32 +15,23 @@ class BestItems(Command):
     popular items for that champions by games played."""
     @override
     def validate(self, inputs: list | None = None) -> Any:
-        client = MetaTFTClient()
-        set_data = client.fetch(MetaTFTApis.SET_DATA)
-        champ_ids = ql.query(set_data).idx('units').filter(ql.idx('traits').len().gt(0)).map(ql.idx('apiName')).unary(set).eval()
         if inputs is None or len(inputs) != 1:
             raise ValidationException(f"Invalid input: {inputs}")
         champ_id = inputs[0]
-        if champ_id not in champ_ids:
-            raise ValidationException(f"Champion not found: {champ_id}")
-        return inputs
+        if champ_id not in get_champ_aliases():
+            raise ValidationException(f"Champion alias not found: {champ_id}")
+        return get_champ_aliases()[champ_id]
 
     
     @override
-    def execute(self, inputs: list | None = None) -> Any:
-        assert inputs is not None
-        client = MetaTFTClient()
-        champ_item_data = client.fetch_champ(inputs[0])
-        def avg_place(places: Any) -> Any:
-            tot = sum(places)
-            return sum((i+1) * x / tot for i, x in enumerate(places))
-        champ_items = ql.query(champ_item_data).idx('items').map(ql.sub({
-            'name': ql.idx('itemName'),
+    def execute(self, inputs: Any = None) -> Any:
+        return ql.query(meta.get_champ_item_data(inputs)).idx(f"{inputs}.items").filter(
+            ql.idx('itemName').in_set(get_item_name_map())
+        ).map(ql.sub({
+            'name': ql.idx('itemName').replace(get_item_name_map()),
             "avg_place": ql.idx('places').unary(avg_place),
             "games": ql.idx('places').unary(sum)
         })).sort_by(ql.idx('games'), True).top(10).eval()
-
-        return champ_items
         
     
     @override

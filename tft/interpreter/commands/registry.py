@@ -11,12 +11,12 @@ class Command(ABC):
         """Does any validation and conversion before executing the command.
         Should be overriden. Should throw validation exception. Should return
         validated parameters."""
-        raise NotImplementedError('Need to implement validate().')
+        return None
 
     @abstractmethod
-    def execute(self, inputs: list | None = None) -> Any:
+    def execute(self, inputs: Any = None) -> Any:
         """Executes the command."""
-        raise NotImplementedError('Need to implement execute().')
+        return None
     
     def print(self, outputs: Any = None) -> None:
         """Prints outputs of command to command line. Should be overriden
