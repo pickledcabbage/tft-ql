@@ -1,3 +1,6 @@
+""" Run the interpreter with this command:
+poetry run python tft/interpreter/core.py
+"""
 # Import all commands and registry.
 import tft.interpreter.commands.api as commands
 from tft.interpreter.commands.registry import ValidationException

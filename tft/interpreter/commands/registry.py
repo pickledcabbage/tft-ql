@@ -7,18 +7,18 @@ class ValidationException(Exception):
 
 class Command(ABC):
     @abstractmethod
-    def validate(self, inputs=None) -> Any:
+    def validate(self, inputs: list | None = None) -> Any:
         """Does any validation and conversion before executing the command.
         Should be overriden. Should throw validation exception. Should return
         validated parameters."""
         raise NotImplementedError('Need to implement validate().')
 
     @abstractmethod
-    def execute(self, inputs=None) -> Any:
+    def execute(self, inputs: list | None = None) -> Any:
         """Executes the command."""
         raise NotImplementedError('Need to implement execute().')
     
-    def print(self, outputs=None) -> None:
+    def print(self, outputs: Any = None) -> None:
         """Prints outputs of command to command line. Should be overriden
         with specific rendering logic."""
         print(outputs)
@@ -31,6 +31,6 @@ def register(name: str):
     def identity(cls):
         assert name not in COMMAND_REGISTRY, f"Two commands registered under: {name}"
         assert name not in QUIT_COMMANDS, f"Command name cannot be a quit command: {QUIT_COMMANDS}"
-        COMMAND_REGISTRY[name] = cls
+        COMMAND_REGISTRY[name] = cls()
         return cls
     return identity
