@@ -28,8 +28,8 @@ class Interpreter:
             command = commands.COMMAND_REGISTRY[command_name]
 
             try:
-                command.validate(args)
-                outputs = command.execute(args)
+                validated_outputs = command.validate(args)
+                outputs = command.execute(validated_outputs)
                 command.print(outputs)
             except ValidationException as e:
                 print(e)

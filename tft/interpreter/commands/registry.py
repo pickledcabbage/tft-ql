@@ -7,8 +7,10 @@ class ValidationException(Exception):
 
 class Command(ABC):
     @abstractmethod
-    def validate(self, inputs=None) -> None:
-        """Should be overriden. Should throw validation exception."""
+    def validate(self, inputs=None) -> Any:
+        """Does any validation and conversion before executing the command.
+        Should be overriden. Should throw validation exception. Should return
+        validated parameters."""
         raise NotImplementedError('Need to implement validate().')
 
     @abstractmethod

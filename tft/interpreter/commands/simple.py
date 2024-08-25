@@ -3,10 +3,12 @@
 from typing import Any, override
 from tft.interpreter.commands.registry import Command, register
 
+__all__ = ["PrintHelloWorld"]
+
 @register(name='hello')
 class PrintHelloWorld(Command):
     @override
-    def validate(self, inputs=None) -> None:
+    def validate(self, inputs=None) -> Any:
         pass
 
     @override
