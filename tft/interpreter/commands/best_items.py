@@ -6,6 +6,7 @@ import tft.ql.expr as ql
 __all__ = ["BestItems"]
 
 @register(name='bi')
+@register(name='best_items')
 class BestItems(Command):
     """This command takes in a champion name and returns a list of the most
     popular items for that champions by games played."""

@@ -28,6 +28,7 @@ QUIT_COMMANDS = {'q', 'exit', 'quit'}
 
 def register(name: str):
     """Register a command name. Command name will be used in command line."""
+    assert ' ' not in name, "Command names cannot have spaces!"
     def identity(cls):
         assert name not in COMMAND_REGISTRY, f"Two commands registered under: {name}"
         assert name not in QUIT_COMMANDS, f"Command name cannot be a quit command: {QUIT_COMMANDS}"
