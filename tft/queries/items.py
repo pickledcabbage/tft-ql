@@ -21,7 +21,7 @@ def get_item_name_map():
     global ITEM_NAME_MAP
     if ITEM_NAME_MAP is None:
         ITEM_NAME_MAP = {}
-        component_item_map = query_component_items().eval()
+        component_item_map = query_component_items().map(ql.idx('name')).eval()
         buildable_items = query_buildable_items().map(ql.idx('name')).eval()
         for k, v in component_item_map.items():
             ITEM_NAME_MAP[k] = v
