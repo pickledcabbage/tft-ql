@@ -18,7 +18,7 @@ class TraitCommand(Command):
         if inputs is None:
             raise ValidationException("Inputs cannot by none.")
         if len(inputs) != 1:
-            raise ValidationException("trait command takes one only trait.")
+            raise ValidationException("Trait command takes exactly one trait.")
         trait_alias = inputs[0]
         if trait_alias not in get_trait_aliases():
             raise ValidationException(f"Invalid trait alias: {trait_alias}")

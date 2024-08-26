@@ -13,6 +13,7 @@ class Interpreter:
 
     def run(self):
         """This function runs the main loop of the command line interpreter."""
+        print("Starting interpreter, use command 'help' for info.")
         inp = '' # Something that we aren't using.
         while True:
             inp = input(PROMPT)
