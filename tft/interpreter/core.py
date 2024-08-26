@@ -36,8 +36,8 @@ class Interpreter:
                 command.print(outputs)
             except ValidationException as e:
                 print(e)
-            except Exception as e:
-                print(f"Command unexpectedly failed: {e}")
+            # except Exception as e:
+            #     print(f"Command unexpectedly failed: {e}")
 
 
 if __name__ == '__main__':

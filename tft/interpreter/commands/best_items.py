@@ -1,6 +1,7 @@
 from typing import Any, override
 from tft.interpreter.commands.registry import Command, ValidationException, register
 import tft.client.meta as meta
+from tft.ql.table import AvgPlaceField, GamesPlayedField, ItemNameField, Table
 from tft.queries.aliases import get_champ_aliases
 from tft.ql.util import avg_place
 import tft.ql.expr as ql
@@ -27,14 +28,14 @@ class BestItems(Command):
     def execute(self, inputs: Any = None) -> Any:
         return ql.query(meta.get_champ_item_data(inputs)).idx(f"{inputs}.items").filter(
             ql.idx('itemName').in_set(get_item_name_map())
-        ).map(ql.sub({
-            'name': ql.idx('itemName').replace(get_item_name_map()),
-            "avg_place": ql.idx('places').unary(avg_place),
-            "games": ql.idx('places').unary(sum)
-        })).sort_by(ql.idx('games'), True).top(10).eval()
+        ).sort_by(ql.idx('places').unary(sum), True).top(10).eval()
         
     
     @override
     def print(self, outputs: Any = None) -> None:
-        for row in outputs:
-            print(f"{row['name']:30} {row['avg_place']:5.2f} {row['games']:8}")
+        table = Table([
+            ItemNameField('Item', ql.idx('itemName')),
+            AvgPlaceField('Avg Place', ql.idx('places')),
+            GamesPlayedField('Games', ql.idx('places'))
+        ])
+        table.print(outputs)
