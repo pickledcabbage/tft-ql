@@ -39,3 +39,12 @@ class TraitCommand(Command):
             TraitField('Trait 3', ql.idx('traits').unary(pad_traits).idx('2'))
         ])
         table.print(outputs)
+    
+    @override
+    def name(self) -> str:
+        return "Champions with Trait"
+    
+    @override
+    def description(self) -> None:
+        print("Prints all champions and their costs for a specific trait.")
+        print("Usage: trait <champion>")

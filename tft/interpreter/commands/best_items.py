@@ -10,7 +10,6 @@ from tft.queries.items import get_item_name_map
 __all__ = ["BestItems"]
 
 @register(name='bi')
-@register(name='best_items')
 class BestItems(Command):
     """This command takes in a champion name and returns a list of the most
     popular items for that champions by games played."""
@@ -39,3 +38,12 @@ class BestItems(Command):
             GamesPlayedField('Games', ql.idx('places'))
         ])
         table.print(outputs)
+    
+    @override
+    def name(self) -> str:
+        return "Best Items for Champion"
+
+    @override
+    def description(self) -> None:
+        print("Returns the 10 most popular items for a champion.")
+        print("Usage: bi <champion>")

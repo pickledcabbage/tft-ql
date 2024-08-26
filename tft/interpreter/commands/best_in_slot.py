@@ -40,7 +40,12 @@ class BestInSlotCommand(Command):
             GamesPlayedField('Games', ql.idx('places'))
         ])
         table.print(outputs)
-        # item_name_map = get_item_name_map()
-        # for row in outputs:
-        #     items = row['items']
-        #     print(f"{item_name_map[items[0]]:20} {item_name_map[items[1]]:20} {item_name_map[items[2]]:20} {row['avg_place']:5.2f} {row['games']:8}")
+    
+    @override
+    def name(self) -> str:
+        return "Best in Slot Items for Champion"
+    
+    @override
+    def description(self) -> None:
+        print("Returns the 10 most popular 3 item builds for a champion.")
+        print("Usage: bis <champion>")

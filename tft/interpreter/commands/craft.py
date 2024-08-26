@@ -56,4 +56,13 @@ class CraftCommand(Command):
             print(item_name_map[outputs['name']], unique)
             composition = outputs['composition']
             print(f"{item_name_map[composition[0]]} + {item_name_map[composition[1]]}")
+    
+    @override
+    def name(self) -> str:
+        return "Crafting Recipes"
+
+    @override
+    def description(self) -> None:
+        print("List recipes for components and completed items.")
+        print("Usage: craft <item>")
 

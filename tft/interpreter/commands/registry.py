@@ -22,6 +22,16 @@ class Command(ABC):
         """Prints outputs of command to command line. Should be overriden
         with specific rendering logic."""
         print(outputs)
+    
+    def description(self) -> None:
+        """Prints description of command for help functions. Please don't
+        forget to fill out."""
+        print("No description added. Please add a description to this command.")
+    
+    def name(self) -> str:
+        """Prints full name of the command for help functions. Please fill
+        out."""
+        return ''
 
 COMMAND_REGISTRY: dict[str, Command] = {}
 QUIT_COMMANDS = {'q', 'exit', 'quit'}
