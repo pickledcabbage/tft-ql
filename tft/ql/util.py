@@ -23,3 +23,10 @@ def avg_place(places: Any) -> Any:
     [4, 6, 8, 10, 8, 6, 4, 10] => 4.714285714285714"""
     tot = sum(places)
     return sum((i+1) * x / tot for i, x in enumerate(places))
+
+def pad_traits(traits: list[str]) -> list[str]:
+    """Pads traits list with blank strings."""
+    new_traits = [trait for trait in traits]
+    while len(new_traits) < 3:
+        new_traits.append('')
+    return new_traits

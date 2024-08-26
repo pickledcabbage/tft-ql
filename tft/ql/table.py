@@ -13,7 +13,7 @@ class Field:
     length: int = attrs.field()
 
     def __attrs_post_init__(self):
-        # Self length based on field name.
+        # Set length based on field name.
         self.length = max(len(self.name), self.length)
 
     @abstractmethod
@@ -73,14 +73,43 @@ class AvgPlaceField(Field):
         return f"{self.query.unary(avg_place).eval(source):{self.length}.{self.decimals}f}"
 
 @attrs.define
+class TraitField(Field):
+    """Used to print out a trait name."""
+    length: int = attrs.field(default=15)
+
+    @override
+    def get(self, source: dict) -> str:
+        # Trait names are already readable.
+        return f"{self.query.eval(source):{self.length}}"
+
+@attrs.define
+class CostField(Field):
+    length: int = attrs.field(default=3)
+    
+    @override
+    def get(self, source: dict) -> str:
+        # Trait names are already readable.
+        return f"{self.query.eval(source):{self.length}}"
+
+@attrs.define
+class StaticField(Field):
+    value: str = attrs.field()
+
+    @override
+    def get(self, source: dict) -> str:
+        return f"{self.value:{self.length}}"
+
+@attrs.define
 class Table:
     fields: list[Field] = attrs.field()
     delim: str = attrs.field(default=' | ')
+    header: bool = attrs.field(default=True)
 
     def print(self, rows: Iterable) -> None:
         header = self.delim.join([f"{field.name:{field.length}}" for field in self.fields])
-        print("-" * len(header))
-        print(header)
-        print("-" * len(header))
+        if self.header:
+            print("-" * len(header))
+            print(header)
+            print("-" * len(header))
         for row in rows:
             print(self.delim.join([field.get(row) for field in self.fields]))

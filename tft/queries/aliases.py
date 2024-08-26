@@ -1,5 +1,6 @@
 ITEM_ALIASES = None
 CHAMP_ALIASES = None
+TRAIT_ALIASES = None
 
 def read_map_csv(filename: str) -> dict:
     alias_dict = {}
@@ -29,6 +30,12 @@ def get_item_aliases():
         ITEM_ALIASES = read_map_csv('config/item_aliases.csv')
     return ITEM_ALIASES
 
+def get_trait_aliases():
+    global TRAIT_ALIASES
+    if TRAIT_ALIASES is None:
+        TRAIT_ALIASES = read_map_csv('config/trait_aliases.csv')
+    return TRAIT_ALIASES
+
 # Make sure item and champ aliases don't overlap!
 get_item_aliases()
 get_champ_aliases()
@@ -37,4 +44,5 @@ for alias in CHAMP_ALIASES:
 for alias in ITEM_ALIASES:
     assert alias not in CHAMP_ALIASES, f"Overlapping alias: {alias}"
 
+# Maybe ensure some trait alias guidelines?
     
