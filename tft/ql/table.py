@@ -3,6 +3,7 @@ from typing import Iterable, override
 import attrs
 import tft.ql.expr as ql
 from tft.ql.util import avg_place
+from tft.queries.augs import get_aug_name_map
 from tft.queries.champs import get_champ_name_map
 from tft.queries.items import get_item_name_map
 from tft.queries.traits import get_trait_name_map
@@ -17,9 +18,9 @@ class Field:
         # Set length based on field name.
         self.length = max(len(self.name), self.length)
 
-    @abstractmethod
     def get(self, source: dict) -> str:
-        raise NotImplementedError("render() must be implemented!")
+        val = self.query.eval(source)
+        return f"{self.query.eval(source):{self.length}}"
 
 @attrs.define
 class ItemNameField(Field):
@@ -113,8 +114,23 @@ class TraitField(Field):
 
     @override
     def get(self, source: dict) -> str:
-        # Trait names are already readable.
-        return f"{self.query.eval(source):{self.length}}"
+        return f"{self.query.unary(self.coerce_trait_name).eval(source):{self.length}}"
+
+@attrs.define
+class AugmentField(Field):
+    """Used to print out an augment name."""
+    length: int = attrs.field(default=20)
+
+    def coerce_augment_name(self, name_or_uid: str) -> str:
+        aug_name_map = get_aug_name_map()
+        if name_or_uid in aug_name_map:
+            return aug_name_map[name_or_uid]
+        return name_or_uid
+    
+    @override
+    def get(self, source: dict) -> str:
+        return f"{self.query.unary(self.coerce_augment_name).eval(source):{self.length}}"
+
 
 @attrs.define
 class CostField(Field):
@@ -142,10 +158,23 @@ class StaticField(Field):
         return f"{self.value:{self.length}}"
 
 @attrs.define
+class PercentField(Field):
+    length: int = attrs.field(default=5)
+
+    @override
+    def get(self, source: dict) -> str:
+        return f"{self.query.eval(source) * 100:5.2f}"
+
+@attrs.define
 class Table:
     fields: list[Field] = attrs.field()
     delim: str = attrs.field(default=' | ')
     header: bool = attrs.field(default=True)
+
+    def adjust_field_to_size(self, s, length):
+        if len(s) > length:
+            return s[:length-3] + "..."
+        return s
 
     def print(self, rows: Iterable) -> None:
         header = self.delim.join([f"{field.name:{field.length}}" for field in self.fields])
@@ -154,4 +183,4 @@ class Table:
             print(header)
             print("-" * len(header))
         for row in rows:
-            print(self.delim.join([field.get(row) for field in self.fields]))
+            print(self.delim.join([self.adjust_field_to_size(field.get(row), field.length) for field in self.fields]))

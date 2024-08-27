@@ -139,12 +139,9 @@ class Explode(Transform):
                     new_item[self.to_field] = field
                     output.append(new_item)
             elif isinstance(m[field], dict):
-                output = []
-                for item in m[field].values():
-                    assert isinstance(item, dict), f"Internal item not of type dict: {type(item)}"
-                    new_item = copy.deepcopy(item)
-                    new_item[self.to_field] = field
-                    output.append(new_item)
+                new_item = copy.deepcopy(m[field])
+                new_item[self.to_field] = field
+                output.append(new_item)
             else:
                 assert False, f"Bad internal dict type for explode: {type(m[field])}"
         return output
