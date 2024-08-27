@@ -8,3 +8,4 @@ from tft.interpreter.commands.best_in_slot import *
 from tft.interpreter.commands.trait import *
 from tft.interpreter.commands.help import *
 from tft.interpreter.commands.warm import *
+from tft.interpreter.commands.early import *

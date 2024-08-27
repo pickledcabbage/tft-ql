@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Iterable
 
 
 def splay(m: Any, layer: int = 0, depth: int | None =None) -> None:
@@ -30,3 +30,15 @@ def pad_traits(traits: list[str]) -> list[str]:
     while len(new_traits) < 3:
         new_traits.append('')
     return new_traits
+
+def match_score(search_params: Iterable):
+    comparison_set = set(search_params)
+    def compare(other: Iterable) -> int:
+        count = 0
+        # We set this because there are double poppy builds.
+        for item in set(other):
+            if item in comparison_set:
+                count += 1
+        return count
+    
+    return compare

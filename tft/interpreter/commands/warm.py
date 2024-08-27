@@ -22,10 +22,11 @@ class WarmUpCommand(Command):
         meta.get_comp_data()
         meta.get_champ_item_data()
         meta.get_set_data()
+        meta.get_comp_details()
     
     @override
     def print(self, outputs: Any = None) -> None:
-        print('Caches warmed.')
+        print('Caches are warm.')
     
     @override
     def name(self) -> str:

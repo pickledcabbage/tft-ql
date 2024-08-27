@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from enum import Enum
 import json
+import copy
 from typing import Any, Callable, Iterable, Self, override
 from attrs import define, field, evolve
 from tft.ql.util import splay
@@ -111,6 +112,42 @@ class SubQuery(Transform):
     
     def get_type(self) -> TransformType:
         return TransformType.SINGLE
+
+@define
+class Extend(Transform):
+    sub_query: SubQuery = field()
+
+    def transform(self, m: Any) -> Any:
+        output = copy.deepcopy(m)
+        sub_output = self.sub_query.transform(m)
+        for k, v in sub_output.items():
+            output[k] = v
+        return output
+
+@define
+class Explode(Transform):
+    to_field: str = field()
+
+    def transform(self, m: Any) -> Any:
+        assert isinstance(m, dict), "Can only explode on a dict field"
+        output = []
+        for field in m.keys():
+            if isinstance(m[field], list):
+                for item in m[field]:
+                    assert isinstance(item, dict), f"Internal item not of type dict: {type(item)}"
+                    new_item = copy.deepcopy(item)
+                    new_item[self.to_field] = field
+                    output.append(new_item)
+            elif isinstance(m[field], dict):
+                output = []
+                for item in m[field].values():
+                    assert isinstance(item, dict), f"Internal item not of type dict: {type(item)}"
+                    new_item = copy.deepcopy(item)
+                    new_item[self.to_field] = field
+                    output.append(new_item)
+            else:
+                assert False, f"Bad internal dict type for explode: {type(m[field])}"
+        return output
 
 @define
 class LessThan(Transform):
@@ -268,6 +305,15 @@ class Values(Transform):
         return list(m.values())
 
 @define
+class Only(Transform):
+    def transform(self, m: Any) -> Any:
+        assert len(m) == 1, f"Can only use only() if there is exactly one output"
+        assert isinstance(m, list) or isinstance(m, dict), f"Can only use only() on dicts or lists: {type(m)}"
+        if isinstance(m, dict):
+            return list(m.values())[0]
+        return m[0]
+
+@define
 class SortBy(Transform):
     query: Query = field()
     reverse: bool = field()
@@ -307,20 +353,7 @@ class Result:
                 raise Exception(f"Encounter bad nested result with results type: {type(self.results)}")
         else:
             assert self.value is not None
-            t_type = transform.get_type()
-            match t_type:
-                case TransformType.SINGLE:
-                    self.value = transform.transform(self.value)
-                case TransformType.MULTI:
-                    temp = transform.transform(self.value)
-                    if isinstance(temp, dict):
-                        self.value = None
-                        self.results = {k: Result(value=v) for k,v in temp.items()}
-                    elif isinstance(temp, list):
-                        self.value = None
-                        self.results = [Result(value=v) for v in temp]
-                    else:
-                        raise Exception(f"Getting multi-result on bad type: {type(temp)}")
+            self.value = transform.transform(self.value)
     
     def to_dict(self) -> Any:
         if self.is_val():
@@ -361,6 +394,12 @@ class BaseQuery(Query):
     
     def sub(self, sub_queries: dict[Any, Query]) -> Self:
         return self._evolve(SubQuery(sub_queries))
+
+    def extend(self, sub_queries: dict[Any, Query]) -> Self:
+        return self._evolve(Extend(SubQuery(sub_queries)))
+    
+    def explode(self, to_field: str) -> Self:
+        return self._evolve(Explode(to_field))
     
     def filter(self, query: Query) -> Self:
         return self._evolve(Filter(query))
@@ -394,6 +433,9 @@ class BaseQuery(Query):
     
     def values(self) -> Self:
         return self.vals()
+    
+    def only(self) -> Self:
+        return self._evolve(Only())
     
     def sort_by(self, query: Query, reverse: bool = False) -> Self:
         return self._evolve(SortBy(query, reverse))
@@ -477,6 +519,9 @@ def split(delim: str = ',') -> BaseQuery:
 def sub(sub_queries: dict) -> BaseQuery:
     return query().sub(sub_queries)
 
+def extend(sub_queries: dict) -> BaseQuery:
+    return query().extend(sub_queries)
+
 def filter(_query: Query) -> BaseQuery:
     return query().filter(_query)
 
@@ -521,3 +566,9 @@ def replace(mapping: dict) -> BaseQuery:
 
 def in_set(other) -> BaseQuery:
     return query().in_set(other)
+
+def only() -> BaseQuery:
+    return query().only()
+
+def explode(to_field: str) -> BaseQuery:
+    return query().explode(to_field)
