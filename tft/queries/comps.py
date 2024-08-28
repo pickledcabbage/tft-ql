@@ -29,3 +29,13 @@ def query_comp_details():
             'levels',
             'rerolls'
         ]))
+
+def query_top_comps():
+    return ql.query(meta.get_comp_data()).idx('results.data.cluster_details').map(ql.sub({
+        'units': ql.idx('units_string').split(', '),
+        'name': ql.idx('name').map(ql.select(['name', 'type'])),
+        'games': ql.idx('overall.count'),
+        'avg_place': ql.idx('overall.avg'),
+        'builds': ql.idx('builds').map(ql.idx('buildName'), ql.idx('unit')),
+        'stars': ql.idx('stars')
+    })).explode('cluster')
