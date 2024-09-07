@@ -31,4 +31,3 @@ def get_item_name_map():
         ITEM_NAME_MAP['TFT12_Item_Faerie_QueensCrown'] = "Faerie Queen's Crown"
         ITEM_NAME_MAP['TFT_Item_UnstableTreasureChest'] = "Unstable Treasure Chest"
     return ITEM_NAME_MAP
-

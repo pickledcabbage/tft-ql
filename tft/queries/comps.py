@@ -19,7 +19,7 @@ def query_comps():
     }).values().flatten()).explode('cluster').sort_by(ql.idx('games'), True)
 
 def query_comp_details():
-    return ql.query(meta.get_comp_details()).map(
+    return ql.query(meta.get_comp_details()).filter(ql.contains('results')).map(
         ql.idx('results').select([
             'placements',
             'unit_stats',

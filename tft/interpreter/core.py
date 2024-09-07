@@ -2,6 +2,8 @@
 poetry run python tft/interpreter/core.py
 """
 # Import all commands and registry.
+import argparse
+import tft.client.meta as meta
 import tft.interpreter.commands.api as commands
 from tft.interpreter.commands.registry import ValidationException
 
@@ -42,5 +44,13 @@ class Interpreter:
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='TFT Interpreter',
+        description='Provides helpful commands to play TFT.')
+    parser.add_argument('-l', '--local', action='store_true')
+    args = parser.parse_args()
+    if args.local:
+        # Create a local client.
+        meta.create_client(True)
     interpreter = Interpreter()
     interpreter.run()

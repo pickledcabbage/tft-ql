@@ -1,5 +1,8 @@
 
 from enum import Enum
+import json
+from pathlib import Path
+import attrs
 import requests
 import tft.ql.expr as ql
 import multiprocessing
@@ -19,17 +22,37 @@ URLS = {
     MetaTFTApis.COMP_DETAILS: "https://api2.metatft.com/tft-comps-api/comp_details"
 }
 
+CACHE_PATH = 'res/cache/cache.json'
+
 CACHE = {}
 CHAMP_CACHE = {}
 COMP_CACHE = {}
+CLIENT = None
 
+@attrs.define
 class MetaTFTClient:
+    local_cache: bool = attrs.field(default=False)
+
+    def __attrs_post_init__(self):
+        """Maybe load caches."""
+        global CACHE
+        global CHAMP_CACHE
+        global COMP_CACHE
+        path = Path(CACHE_PATH)
+        if self.local_cache and path.exists():
+            with open(path, 'r') as f:
+                CACHE = json.load(f)
+            if MetaTFTApis.CHAMP_ITEMS in CACHE:
+                CHAMP_CACHE = CACHE[MetaTFTApis.CHAMP_ITEMS.value]
+            if MetaTFTApis.COMP_DETAILS in CACHE:
+                COMP_CACHE = CACHE[MetaTFTApis.COMP_DETAILS.value]
+
     def fetch(self, api: MetaTFTApis) -> dict:
         global CACHE
         global CHAMP_CACHE
         """Fetches given API and returns a dict. Subsequent requests are cached."""
-        if api in CACHE:
-            return CACHE[api]
+        if api.value in CACHE:
+            return CACHE[api.value]
         if api == MetaTFTApis.CHAMP_ITEMS:
             champ_ids = ql.query(self.fetch(MetaTFTApis.SET_DATA)).idx('units').filter(ql.idx('traits').len().gt(0)).map(ql.idx('apiName')).eval()
             champ_ids = {champ_id for champ_id in champ_ids if champ_id not in CHAMP_CACHE}
@@ -48,7 +71,12 @@ class MetaTFTClient:
             data = COMP_CACHE
         else:
             data = requests.get(URLS[api]).json()
-        CACHE[api] = data
+        CACHE[api.value] = data
+        if self.local_cache:
+            path = Path(CACHE_PATH)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, 'w') as f:
+                json.dump(CACHE, f)
         return data
         
     
@@ -76,25 +104,30 @@ class MetaTFTClient:
             COMP_CACHE[cid] = requests.get(URLS[MetaTFTApis.COMP_DETAILS], params=params).json()
         return COMP_CACHE[cid]
 
-# APIs with caching.
+def create_client(local_cache: bool = False):
+    global CLIENT
+    CLIENT = MetaTFTClient(local_cache)
+
+def get_client():
+    if CLIENT is not None:
+        return CLIENT
+    return MetaTFTClient()
 
 def get_set_data():
-    client = MetaTFTClient()
-    return client.fetch(MetaTFTApis.SET_DATA)
+    return get_client().fetch(MetaTFTApis.SET_DATA)
 
 def get_comp_data():
-    client = MetaTFTClient()
-    return client.fetch(MetaTFTApis.COMPS_DATA)
+    return get_client().fetch(MetaTFTApis.COMPS_DATA)
 
 def get_champ_item_data(champ_id: str | None = None):
-    client = MetaTFTClient()
+    client = get_client()
     if champ_id is None:
         return client.fetch(MetaTFTApis.CHAMP_ITEMS)
     else:
         return {champ_id: client.fetch_champ(champ_id)}
 
 def get_comp_details(cid: str | int | None = None):
-    client = MetaTFTClient()
+    client = get_client()
     if cid is None:
         return client.fetch(MetaTFTApis.COMP_DETAILS)
     else:
