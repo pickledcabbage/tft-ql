@@ -8,6 +8,7 @@ from tft.queries.aliases import get_trait_aliases
 from tft.queries.champs import query_champs
 import tft.ql.expr as ql
 from tft.queries.traits import query_traits
+import tft.interpreter.validation as valid
 
 
 @register(name='trait')
@@ -15,15 +16,10 @@ class TraitCommand(Command):
     """Returns all champs of a particular trait."""
     
     @override
-    def validate(self, inputs: list | None = None) -> Any:
-        if inputs is None:
-            raise ValidationException("Inputs cannot by none.")
-        if len(inputs) != 1:
-            raise ValidationException("Trait command takes exactly one trait.")
-        trait_alias = inputs[0]
-        if trait_alias not in get_trait_aliases():
-            raise ValidationException(f"Invalid trait alias: {trait_alias}")
-        return get_trait_aliases()[trait_alias]
+    def validate(self, inputs: list[str]) -> Any:
+        # This will work, don't mind the type checking.
+        return valid.evaluate_validation(valid.IsTrait(is_hard=False), inputs)[0]
+
     
     @override
     def execute(self, inputs: Any = None) -> Any:

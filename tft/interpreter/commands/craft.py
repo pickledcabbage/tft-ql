@@ -5,6 +5,7 @@ from tft.interpreter.commands.registry import Command, ValidationException, regi
 from tft.queries.aliases import get_item_aliases
 from tft.queries.items import get_item_name_map, query_buildable_items, query_component_items
 import copy
+import tft.interpreter.validation as valid
 
 @register(name='craft')
 class CraftCommand(Command):
@@ -13,15 +14,8 @@ class CraftCommand(Command):
     components."""
 
     @override
-    def validate(self, inputs: list | None = None) -> Any:
-        if inputs is None:
-            raise ValidationException("Input is none.")
-        if len(inputs) != 1:
-            raise ValidationException("Expected only one item")
-        item_name = inputs[0]
-        if item_name not in get_item_aliases():
-            raise ValidationException(f"Unknown item alias: {item_name}")
-        return get_item_aliases()[item_name]
+    def validate(self, inputs: list[str]) -> Any:
+        return valid.evaluate_validation(valid.IsItem(), inputs)[0]
     
     @override
     def execute(self, inputs: Any = None) -> Any:

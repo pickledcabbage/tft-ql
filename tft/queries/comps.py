@@ -3,7 +3,7 @@ import tft.client.meta as meta
 
 
 def query_comps():
-    return ql.query(meta.get_comp_details()).map(ql.idx('results').sub({
+    return ql.query(meta.get_comp_details()).filter(ql.contains('results')).map(ql.idx('results').sub({
         'early': ql.idx('early_options').explode('level').map(ql.sub({
             'units': ql.idx('unit_list').split('&'),
             'avg_place': ql.idx('avg'),

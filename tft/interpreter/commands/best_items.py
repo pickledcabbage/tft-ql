@@ -6,6 +6,7 @@ from tft.queries.aliases import get_champ_aliases
 from tft.ql.util import avg_place
 import tft.ql.expr as ql
 from tft.queries.items import get_item_name_map
+import tft.interpreter.validation as valid
 
 __all__ = ["BestItems"]
 
@@ -14,13 +15,8 @@ class BestItems(Command):
     """This command takes in a champion name and returns a list of the most
     popular items for that champions by games played."""
     @override
-    def validate(self, inputs: list | None = None) -> Any:
-        if inputs is None or len(inputs) != 1:
-            raise ValidationException(f"Invalid input: {inputs}")
-        champ_id = inputs[0]
-        if champ_id not in get_champ_aliases():
-            raise ValidationException(f"Champion alias not found: {champ_id}")
-        return get_champ_aliases()[champ_id]
+    def validate(self, inputs: list[str]) -> Any:
+        return valid.evaluate_validation(valid.IsChampion(), inputs)[0]
 
     
     @override

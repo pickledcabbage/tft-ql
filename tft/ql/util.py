@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Any, Iterable
 
 
@@ -41,4 +42,21 @@ def match_score(search_params: Iterable):
                 count += 1
         return count
     
+    return compare
+
+def count_match_score(search_params: Iterable):
+    comparison_dict = defaultdict(int)
+    for item in search_params:
+        comparison_dict[item] += 1
+    
+    def compare(other: Iterable) -> int:
+        count = 0
+        other_comparison_dict = defaultdict(int)
+        for item in other:
+            other_comparison_dict[item] += 1
+        
+        for item, val in other_comparison_dict.items():
+            count += min(val, comparison_dict[item])
+        
+        return count
     return compare

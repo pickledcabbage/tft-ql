@@ -7,6 +7,7 @@ from tft.ql.util import match_score
 from tft.queries.aliases import get_champ_aliases
 import tft.ql.expr as ql
 from tft.queries.comps import query_comps, query_top_comps
+import tft.interpreter.validation as valid
 
 
 @register(name='top')
@@ -14,13 +15,11 @@ class TopCommand(Command):
     """Returns the top comps. If given champs, returns top comps with champ."""
     
     @override
-    def validate(self, inputs: list | None = None) -> Any:
-        if inputs is None:
-            raise ValidationException('Inputs cannot be none.')      
-        for champ in inputs:
-            if champ not in get_champ_aliases():
-                raise ValidationException(f"Champ alias not found: {champ}")
-        return [get_champ_aliases()[champ] for champ in inputs]
+    def validate(self, inputs: list[str]) -> Any:
+        return valid.evaluate_validation(
+            valid.Many(valid.IsChampion()),
+            inputs
+        )
     
     @override
     def execute(self, inputs: Any = None) -> Any:

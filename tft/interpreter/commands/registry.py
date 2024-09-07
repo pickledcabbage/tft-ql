@@ -7,7 +7,7 @@ class ValidationException(Exception):
 
 class Command(ABC):
     @abstractmethod
-    def validate(self, inputs: list | None = None) -> Any:
+    def validate(self, inputs: list[str]) -> Any:
         """Does any validation and conversion before executing the command.
         Should be overriden. Should throw validation exception. Should return
         validated parameters."""

@@ -7,6 +7,7 @@ from tft.ql.util import match_score
 from tft.queries.aliases import get_champ_aliases
 import tft.ql.expr as ql
 from tft.queries.comps import query_comps
+import tft.interpreter.validation as valid
 
 
 @register(name='match')
@@ -14,24 +15,18 @@ class MatchCommand(Command):
     """Returns the top early comps given a list of champs."""
     
     @override
-    def validate(self, inputs: list | None = None) -> Any:
-        if inputs is None:
-            raise ValidationException('Inputs cannot be none.')
-        if len(inputs) > 0:
-            try:
-                # Check if convertable.
-                _first_as_int = int(inputs[0])
-                level_filter = inputs[0]
-                inputs = inputs[1:]
-            except:
-                level_filter = None
-        else:
-            level_filter = None
-        
-        for champ in inputs:
-            if champ not in get_champ_aliases():
-                raise ValidationException(f"Champ alias not found: {champ}")
-        return level_filter, [get_champ_aliases()[champ] for champ in inputs]
+    def validate(self, inputs: list[str]) -> Any:
+        valid_inputs = valid.evaluate_validation(
+            valid.Sequence([
+                valid.Optional(valid.IsInteger()),
+                valid.Many(valid.IsChampion())
+            ]),
+            inputs,
+            group=True
+        )
+        # Yes, level filter is a string.
+        level_filter = None if len(valid_inputs['integer']) == 0 else valid_inputs['integer'][0]
+        return level_filter, valid_inputs['champion']
     
     @override
     def execute(self, inputs: Any = None) -> Any:

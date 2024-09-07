@@ -4,31 +4,47 @@ import tft.client.meta as meta
 from typing import Any, override
 from tft.interpreter.commands.registry import Command, ValidationException, register
 from tft.ql.table import AvgPlaceField, GamesPlayedField, ItemNameField, Table
-from tft.ql.util import avg_place
+from tft.ql.util import avg_place, count_match_score
 from tft.queries.aliases import get_champ_aliases
-from tft.queries.items import get_item_name_map
-
+from tft.queries.items import ItemType, get_item_name_map, get_recipes
+import tft.interpreter.validation as valid
 
 @register(name='bis')
 class BestInSlotCommand(Command):
     @override
     def validate(self, inputs: list | None = None) -> Any:
-        if inputs is None or len(inputs) != 1:
-            raise ValidationException(f"Invalid input: {inputs}")
-        champ_id = inputs[0]
-        if champ_id not in get_champ_aliases():
-            raise ValidationException(f"Champion alias not found: {champ_id}")
-        return get_champ_aliases()[champ_id]
+        valid_output = valid.evaluate_validation(valid.Sequence([
+            valid.IsChampion(),
+            valid.Many(valid.IsItem(ItemType.COMPONENT))
+        ]), inputs)
+        champ = valid_output[0]
+        components = valid_output[1:]
+        return champ, components
     
     @override
     def execute(self, inputs: Any = None) -> Any:
-        return ql.query(meta.get_champ_item_data(inputs)).idx(f"{inputs}.builds").map(ql.sub({
+        champ, components = inputs
+        q = ql.query(meta.get_champ_item_data(champ)).idx(f"{champ}.builds").map(ql.sub({
             'items': ql.idx('buildNames').split('|'),
             'places': ql.idx('places')
-        })).filter(ql.all([
+        }))
+        # Items are in the item name map and builds have 3 items.
+        q = q.filter(ql.all([
             ql.idx('items').map(ql.in_set(get_item_name_map())).unary(all),
             ql.idx('items').len().eq(3)
-        ])).sort_by(ql.idx('places').unary(sum), True).top(10).eval()
+        ]))
+        # Converts item to components if it has components.
+        def components_or_self(item: str) -> list[str]:
+            if item in get_recipes():
+                return get_recipes()[item]
+            return [item]
+        # Items have the components passed.
+        q = q.map(ql.extend({
+            'matched_components': ql.idx('items').map(ql.unary(components_or_self)).flatten().unary(count_match_score(components))
+        }))
+        q = q.filter(ql.idx('matched_components').eq(len(components)))
+        
+        return q.sort_by(ql.idx('places').unary(sum), True).top(10).eval()
     
     @override
     def print(self, outputs: Any = None) -> None:
