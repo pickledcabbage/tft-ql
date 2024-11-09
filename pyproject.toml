@@ -11,6 +11,9 @@ requests = "^2.32.3"
 attrs = "^24.2.0"
 pandas = "^2.2.2"
 boto3 = "^1.35.13"
+fastapi = "^0.115.4"
+flask = "^3.0.3"
+flask-cors = "^5.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

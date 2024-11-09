@@ -45,18 +45,17 @@ class EarlyCommand(Command):
         return q_aug_info.top(10).eval()
 
     @override
-    def print(self, outputs: Any = None) -> None:
+    def render(self, outputs: Any = None) -> str:
         table = Table([
             AugmentField('Augment', ql.idx('aug')),
             PercentField('Percent', ql.idx('percent'))
         ])
-        table.print(outputs)
+        return table.render(outputs)
     
     @override
     def name(self) -> str:
         return "Composition Details"
     
     @override
-    def description(self) -> None:
-        print("Prints details about about a composition.")
-        print("Usage: comp <comp/cluster id>")
+    def description(self) -> str:
+        return "Prints details about about a composition.\nUsage: comp <comp/cluster id>"

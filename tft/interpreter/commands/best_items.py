@@ -27,19 +27,18 @@ class BestItems(Command):
         
     
     @override
-    def print(self, outputs: Any = None) -> None:
+    def render(self, outputs: Any = None) -> str:
         table = Table([
             ItemNameField('Item', ql.idx('itemName')),
             AvgPlaceField('Avg Place', ql.idx('places')),
             GamesPlayedField('Games', ql.idx('places'))
         ])
-        table.print(outputs)
+        return table.render(outputs)
     
     @override
     def name(self) -> str:
         return "Best Items for Champion"
 
     @override
-    def description(self) -> None:
-        print("Returns the 10 most popular items for a champion.")
-        print("Usage: bi <champion>")
+    def description(self) -> str:
+        return "Returns the 10 most popular items for a champion.\nUsage: bi <champion>"

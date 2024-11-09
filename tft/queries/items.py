@@ -40,8 +40,12 @@ def get_item_name_map():
             ITEM_NAME_MAP[k] = v
         # One offs.
         ITEM_NAME_MAP['TFT12_Item_Faerie_QueensCrown'] = "Faerie Queen's Crown"
+        ITEM_NAME_MAP['TFT12_Item_Faerie_QueensCrownRadiant'] = "Radiant Faerie Queen's Crown"
+        ITEM_NAME_MAP['TFT12_Item_Faerie_ArmorRadiant'] = "Radiant Faerie Armor"
         ITEM_NAME_MAP['TFT_Item_UnstableTreasureChest'] = "Unstable Treasure Chest"
         ITEM_NAME_MAP['TFT7_Item_ShimmerscaleMogulsMail'] = "Mogul's Mail"
+        ITEM_NAME_MAP['TFT_Item_Artifact_SilvermereDawn'] = "Silvermere Dawn"
+        ITEM_NAME_MAP['TFT5_Item_BloodthirsterRadiant'] = "Radiant Bloodthirster"
     return ITEM_NAME_MAP
 
 def get_components():

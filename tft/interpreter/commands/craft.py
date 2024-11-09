@@ -33,30 +33,31 @@ class CraftCommand(Command):
             return data
     
     @override
-    def print(self, outputs: Any = None) -> None:
+    def render(self, outputs: Any = None) -> str:
         item_name_map = get_item_name_map()
+        output = ""
         if 'recipes' in outputs: # Is component query.
             def get_other(composition):
                 return composition[1] if composition[0] == outputs['name'] else composition[0]
             recipes = sorted(outputs['recipes'], key=lambda x: get_other(x['composition']))
-            print(item_name_map[outputs['name']])
+            output += item_name_map[outputs['name']] + "\n"
             for recipe in recipes:
                 composition = recipe['composition']
                 recipe_name = recipe['name']
                 other_item = composition[1] if composition[0] == outputs['name'] else composition[0]
-                print(f" + {item_name_map[other_item]:20} -> {recipe_name:20}")
+                output += f" + {item_name_map[other_item]:20} -> {recipe_name:20}"
         else:
-            unique = '(Unique)' if outputs['unique'] else ''
-            print(item_name_map[outputs['name']], unique)
+            unique = ' (Unique)' if outputs['unique'] else ''
+            output += item_name_map[outputs['name']] + unique + "\n"
             composition = outputs['composition']
-            print(f"{item_name_map[composition[0]]} + {item_name_map[composition[1]]}")
+            output += f"{item_name_map[composition[0]]} + {item_name_map[composition[1]]}\n"
+        return output
     
     @override
     def name(self) -> str:
         return "Crafting Recipes"
 
     @override
-    def description(self) -> None:
-        print("List recipes for components and completed items.")
-        print("Usage: craft <item>")
+    def description(self) -> str:
+        return "List recipes for components and completed items.\nUsage: craft <item>"
 

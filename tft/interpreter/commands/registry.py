@@ -18,15 +18,15 @@ class Command(ABC):
         """Executes the command."""
         return None
     
-    def print(self, outputs: Any = None) -> None:
+    def render(self, outputs: Any = None) -> str:
         """Prints outputs of command to command line. Should be overriden
         with specific rendering logic."""
-        print(outputs)
+        return str(outputs)
     
-    def description(self) -> None:
+    def description(self) -> str:
         """Prints description of command for help functions. Please don't
         forget to fill out."""
-        print("No description added. Please add a description to this command.")
+        return "No description added. Please add a description to this command."
     
     def name(self) -> str:
         """Prints full name of the command for help functions. Please fill

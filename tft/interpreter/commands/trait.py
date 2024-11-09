@@ -30,11 +30,12 @@ class TraitCommand(Command):
         }
 
     @override
-    def print(self, outputs: Any = None) -> None:
+    def render(self, outputs: Any = None) -> str:
         info = outputs['info']
-        print(info['name'])
-        print(f"Champions: {len(outputs['champs'])}")
-        print(f"Tiers: {', '.join([str(tier) for tier in info['levels']])}")
+        output = ""
+        output += info['name'] + "\n"
+        output += f"Champions: {len(outputs['champs'])}\n"
+        output += f"Tiers: {', '.join([str(tier) for tier in info['levels']])}\n"
         table = Table([
             ChampionNameField('Name', ql.idx('apiName')),
             CostField('Cost', ql.idx('cost')),
@@ -42,13 +43,13 @@ class TraitCommand(Command):
             TraitField('Trait 2', ql.idx('traits').unary(pad_traits).idx('1')),
             TraitField('Trait 3', ql.idx('traits').unary(pad_traits).idx('2'))
         ])
-        table.print(outputs['champs'])
+        output += table.render(outputs)
+        return output
     
     @override
     def name(self) -> str:
         return "Champions with Trait"
     
     @override
-    def description(self) -> None:
-        print("Prints all champions and their costs for a specific trait.")
-        print("Usage: trait <trait>")
+    def description(self) -> str:
+        return "Prints all champions and their costs for a specific trait.\nUsage: trait <trait>"

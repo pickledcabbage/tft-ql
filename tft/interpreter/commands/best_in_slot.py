@@ -47,7 +47,7 @@ class BestInSlotCommand(Command):
         return q.sort_by(ql.idx('places').unary(sum), True).top(10).eval()
     
     @override
-    def print(self, outputs: Any = None) -> None:
+    def render(self, outputs: Any = None) -> str:
         table = Table([
             ItemNameField('Item 1', ql.idx('items.0')),
             ItemNameField('Item 2', ql.idx('items.1')),
@@ -55,13 +55,12 @@ class BestInSlotCommand(Command):
             AvgPlaceField('Avg Place', ql.idx('places')),
             GamesPlayedField('Games', ql.idx('places'))
         ])
-        table.print(outputs)
+        return table.render(outputs)
     
     @override
     def name(self) -> str:
         return "Best in Slot Items for Champion"
     
     @override
-    def description(self) -> None:
-        print("Returns the 10 most popular 3 item builds for a champion.")
-        print("Usage: bis <champion>")
+    def description(self) -> str:
+        return "Returns the 10 most popular 3 item builds for a champion.\nUsage: bis <champion>"

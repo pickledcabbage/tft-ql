@@ -42,7 +42,7 @@ class MatchCommand(Command):
         return early_comps
 
     @override
-    def print(self, outputs: Any = None) -> None:
+    def render(self, outputs: Any = None) -> str:
         early_comps = outputs
         table = Table([
             CompClusterField('Id', ql.idx('cluster')),
@@ -51,14 +51,12 @@ class MatchCommand(Command):
             AvgPlaceField('Avg Place', ql.idx('avg_place')),
             GamesPlayedField('Games', ql.idx('games')),
         ])
-        table.print(early_comps)
+        return table.render(early_comps)
     
     @override
     def name(self) -> str:
         return "Champ Comp Match"
     
     @override
-    def description(self) -> None:
-        print("Matches all passed champs to particular comps. Takes in level")
-        print("as a parameter to only get comps of that level.")
-        print("Usage: match <?level> <champion> <champion> ...")
+    def description(self) -> str:
+        return "Matches all passed champs to particular comps. Takes in level\nas a parameter to only get comps of that level.\nUsage: match <?level> <champion> <champion> ..."

@@ -1,0 +1,24 @@
+.App {
+  background-color: #282c34;
+  color: #61dafb;
+  min-height: 100vh;
+  padding: 15px;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+.QueryBar {
+  min-width: 400px;
+  margin-top: 10px;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

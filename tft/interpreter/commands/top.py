@@ -31,7 +31,7 @@ class TopCommand(Command):
         return top_comps
 
     @override
-    def print(self, outputs: Any = None) -> None:
+    def render(self, outputs: Any = None) -> str:
         top_comps = outputs
         id_field = CompClusterField('Id', ql.idx('cluster'), length=3)
         comp_name_field = CompNameField('Name', ql.idx('name'), length=84)
@@ -42,24 +42,26 @@ class TopCommand(Command):
         first_div = 90
         second_div = avg_place.length
         third_div = games.length
-        print(row_length*'-')
-        print(f"{'Team Composition':90} | {avg_place.name:{avg_place.length}} | {games.name:{games.length}}")
-        print(row_length*'-')
+
+        output = ""
+        output += row_length*'-' + "\n"
+        output += f"{'Team Composition':90} | {avg_place.name:{avg_place.length}} | {games.name:{games.length}}" + "\n"
+        output += row_length*'-' + "\n"
         for row in top_comps:
-            print(f"[{id_field.get(row)}] {comp_name_field.get(row)} | {avg_place.get(row)} | {games.get(row)}")
-            print(f"{champ_list_field.get(row)} | {avg_place.length * ' '} |")
-            print(f"{first_div * ' '} | {second_div*' '} |")
+            output += f"[{id_field.get(row)}] {comp_name_field.get(row)} | {avg_place.get(row)} | {games.get(row)}" + "\n"
+            output += f"{champ_list_field.get(row)} | {avg_place.length * ' '} |" + "\n"
+            output += f"{first_div * ' '} | {second_div*' '} |" + "\n"
             for champ in row['builds']:
                 champ_name = coerce_champ_name(champ)
                 item_list_field = ItemListField('Items', ql.idx(f'builds.{champ}'), length=first_div-17, same_length=23, delim=' ')
-                print(f"{champ_name:15}: {item_list_field.get(row)} | {second_div*' '} |")
-            print(row_length*'-')
+                output += f"{champ_name:15}: {item_list_field.get(row)} | {second_div*' '} |" + "\n"
+            output += row_length*'-' + "\n"
+        return output
     
     @override
     def name(self) -> str:
         return "Top Comps"
     
     @override
-    def description(self) -> None:
-        print("Matches given champs to top comps.")
-        print("Usage: top <champion> <champion> ...")
+    def description(self) -> str:
+        return "Matches given champs to top comps.\nUsage: top <champion> <champion> ..."

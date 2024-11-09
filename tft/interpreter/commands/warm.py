@@ -25,15 +25,14 @@ class WarmUpCommand(Command):
         meta.get_comp_details()
     
     @override
-    def print(self, outputs: Any = None) -> None:
-        print('Caches are warm.')
+    def render(self, outputs: Any = None) -> str:
+        return 'Caches are warm.'
     
     @override
     def name(self) -> str:
         return "Warmup Caches"
     
     @override
-    def description(self) -> None:
-        print("This command downloads all info locally, so that futures requests are fast.")
-        print("Usage: warm")
+    def description(self) -> str:
+        return "This command downloads all info locally, so that futures requests are fast.\nUsage: warm"
         

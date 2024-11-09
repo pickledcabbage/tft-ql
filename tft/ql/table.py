@@ -219,11 +219,13 @@ class Table:
     delim: str = attrs.field(default=' | ')
     header: bool = attrs.field(default=True)
 
-    def print(self, rows: Iterable) -> None:
+    def render(self, rows: Iterable) -> str:
+        output = ''
         header = self.delim.join([f"{field.name:{field.length}}" for field in self.fields])
         if self.header:
-            print("-" * len(header))
-            print(header)
-            print("-" * len(header))
+            output += "-" * len(header) + "\n"
+            output += header + "\n"
+            output += "-" * len(header) + "\n"
         for row in rows:
-            print(self.delim.join([field.get(row) for field in self.fields]))
+            output += self.delim.join([field.get(row) for field in self.fields]) + "\n"
+        return output

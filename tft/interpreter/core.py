@@ -36,7 +36,7 @@ class Interpreter:
             try:
                 validated_outputs = command.validate(args)
                 outputs = command.execute(validated_outputs)
-                command.print(outputs)
+                print(command.render(outputs))
             except ValidationException as e:
                 print(e)
             # except Exception as e:
