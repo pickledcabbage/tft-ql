@@ -62,7 +62,7 @@ interface SimplePrinterProps {
 }
 
 const SimplePrinter: React.FC<SimplePrinterProps> = ({text}) => {
-  return <textarea value={text} style={{padding: '10px', minWidth: '100vh', minHeight: '100vh', fontFamily: 'monospace', font: 'Courier'}}></textarea>
+  return <textarea value={text} style={{padding: '10px', width: '100vh', height: '90vh', fontFamily: 'monospace', font: 'Courier'}}></textarea>
 }
 
 export default App;
