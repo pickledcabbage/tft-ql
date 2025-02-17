@@ -1,4 +1,4 @@
-import './App.css';
+
 import { useState } from 'react';
 
 function App() {
@@ -8,7 +8,7 @@ function App() {
       const searchParams = new URLSearchParams({
         query: text
       })
-      const resp = await fetch('http://192.168.1.153:9000/test?' + searchParams)
+      const resp = await fetch('http://172.31.189.92:9000/test?' + searchParams)
       if (resp.status !== 200) {
         setData('Error')
       } else {
