@@ -13,21 +13,26 @@ const styles = {
 }
 
 type Props = {
-    replaceSelf: (tool: QLTool) => void,
+    splitSelf: (tool: QLTool, direction: 'vertical' | 'horizontal') => void,
 }
 
 export default function QLToolOpen(props: Props) {
-    const [tool, setTool] = useState<QLTool>(QLTool.TEST)
+    const [tool, setTool] = useState<QLTool>(QLTool.TEST);
+    const [direction, setDirection] = useState<'vertical' | 'horizontal'>('horizontal');
 
     return (
         <Box>
            <Typography variant='h5'>
-            Tool Opener
+            Tool Splitter
             </Typography>
             <Select value={tool} onChange={(e) => setTool(e.target.value as QLTool)} sx={styles.selector}>
             {Object.values(QLTool).map(tool => (<MenuItem value={tool}>{tool}</MenuItem>))}
             </Select>
-            <Button variant='contained' sx={styles.button} onClick={() => props.replaceSelf(tool)}>Open</Button>
+            <Select value={direction} onChange={(e) => setDirection(e.target.value as ('vertical' | 'horizontal'))} sx={styles.selector}>
+            <MenuItem value={'vertical'}>vertical</MenuItem>
+            <MenuItem value={'horizontal'}>horizontal</MenuItem>
+            </Select>
+            <Button variant='contained' sx={styles.button} onClick={() => props.splitSelf(tool, direction)}>Split</Button>
         </Box>
     );
 }
