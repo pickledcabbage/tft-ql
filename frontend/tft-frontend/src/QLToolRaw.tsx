@@ -49,8 +49,12 @@ export default function QLToolRaw(props: Props) {
                 setOutput('Bad response.');
 
             } else {
-                setOutput(res.data);
-                props.cacheState({ output: res.data });
+                if (res.data.error != null) {
+                    setOutput(res.data.error);
+                } else {
+                    setOutput(res.data.data);
+                }
+                props.cacheState({ output: res.data.data });
             }
         })
         if (props.sessionData.connected) {

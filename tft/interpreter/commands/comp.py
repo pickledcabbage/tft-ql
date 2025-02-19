@@ -45,15 +45,20 @@ class EarlyCommand(Command):
         # Get level info.
         q_level_info = q_comp_details.idx('levels').select(['level', 'stage', 'round'])
 
-        return q_aug_info.top(10).eval()
+        return q_reroll_info.eval()
 
     @override
     def render(self, outputs: Any = None) -> str:
-        table = Table([
+        aug_table = Table([
             AugmentField('Augment', ql.idx('aug')),
             PercentField('Percent', ql.idx('percent'))
         ])
-        return table.render(outputs)
+
+        reroll_table = Table([
+            Field('Lvl', ql.idx('level'), 3),
+            PercentField('Percent', ql.idx('percent')),
+        ])
+        return reroll_table.render(outputs)
     
     @override
     def name(self) -> str:

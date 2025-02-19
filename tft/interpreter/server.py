@@ -62,7 +62,7 @@ def read_root():
     try:
         validated_outputs = command.validate(args)
         outputs = command.execute(validated_outputs)
-        return command.render(outputs)
+        return {'data': command.render(outputs)}
     except ValidationException as e:
         return {'error': str(e)}
     # Don't catch.
