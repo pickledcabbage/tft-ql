@@ -45,7 +45,7 @@ class CraftCommand(Command):
                 composition = recipe['composition']
                 recipe_name = recipe['name']
                 other_item = composition[1] if composition[0] == outputs['name'] else composition[0]
-                output += f" + {item_name_map[other_item]:20} -> {recipe_name:20}"
+                output += f" + {item_name_map[other_item]:20} -> {recipe_name:20}\n"
         else:
             unique = ' (Unique)' if outputs['unique'] else ''
             output += item_name_map[outputs['name']] + unique + "\n"

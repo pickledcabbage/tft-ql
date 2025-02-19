@@ -50,7 +50,6 @@ def read_root():
     query = request.args.get('query')
     if query is None:
         return {'data': ''}
-    print(query)
     inp = query.strip().lower()
     parts = [part for part in inp.split(' ') if part != ''] # We shouldn't break with multiple spaces.
     command_name = parts[0]
@@ -66,8 +65,7 @@ def read_root():
         return command.render(outputs)
     except ValidationException as e:
         return {'error': str(e)}
-    except Exception as e:
-        print(e)
+    # Don't catch.
 
 @app.route('/session/create', methods=['GET'])
 @cross_origin()

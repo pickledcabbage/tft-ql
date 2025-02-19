@@ -8,6 +8,7 @@ from tft.ql.util import match_score
 from tft.queries.aliases import get_champ_aliases
 import tft.ql.expr as ql
 from tft.queries.comps import query_comp_details, query_comps
+import json
 
 
 @register(name='comp')
@@ -16,13 +17,15 @@ class EarlyCommand(Command):
     
     @override
     def validate(self, inputs: list | None = None) -> Any:
+        # Use this to cache results.
         comps = get_comp_details()
+        valid_comps = set(i[1] for i in comps.keys())
         if inputs is None:
             raise ValidationException("Inputs cannot be none.")
         if len(inputs) != 1:
             raise ValidationException("Need exactly one composition param.")
         cid = str(inputs[0])
-        if cid not in comps:
+        if cid not in valid_comps:
             raise ValidationException(f"Composition with id {cid} not found.")
         return cid
     

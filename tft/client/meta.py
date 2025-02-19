@@ -62,8 +62,11 @@ class MetaTFTClient:
                 CHAMP_CACHE[champ_id] = champ_data
             data = CHAMP_CACHE
         elif api == MetaTFTApis.COMP_DETAILS:
-            cids = ql.query(self.fetch(MetaTFTApis.COMPS_DATA)).idx('results.data.cluster_details').map(ql.idx('Cluster')).values().eval()
-            cids = {str(cid) for cid in cids if cid not in COMP_CACHE}
+            results_q = ql.query(self.fetch(MetaTFTApis.COMPS_DATA)).idx('results.data')
+            cids = results_q.idx('cluster_details').map(ql.idx('Cluster')).values().eval()
+            internal_cid = results_q.idx('cluster_id').eval()
+            # Need internal CID and cluster id to query.
+            cids = {(internal_cid, str(cid)) for cid in cids if cid not in COMP_CACHE}
             with multiprocessing.Pool(20) as pool:
                 all_comp_data = pool.map(self.fetch_comp, cids)
             for cid, comp_data in zip(cids, all_comp_data):
@@ -94,12 +97,13 @@ class MetaTFTClient:
             CHAMP_CACHE[champ_id] = requests.get(URLS[MetaTFTApis.CHAMP_ITEMS], params=params).json()
         return CHAMP_CACHE[champ_id]
     
-    def fetch_comp(self, cid: str) -> dict:
+    def fetch_comp(self, cid_pair: tuple[str, str]) -> dict:
+        internal_cid, cid = cid_pair
         global COMP_CACHE
         if cid not in COMP_CACHE:
             params = {
                 'comp': cid,
-                'cluster_id': 284
+                'cluster_id': internal_cid
             }
             COMP_CACHE[cid] = requests.get(URLS[MetaTFTApis.COMP_DETAILS], params=params).json()
         return COMP_CACHE[cid]

@@ -33,43 +33,51 @@ class Transform:
         return TransformType.SINGLE
 
 @define
+class Noop(Transform):
+    @override
+    def transform(self, m: dict | list) -> Any:
+        return m
+
+@define
 class Index(Transform):
     path: list[str] = field(converter=lambda x: x.split('.'))
 
     @override
     def transform(self, m: dict | list) -> Any:
-        assert isinstance(m, dict) or isinstance(m, list), f"Is not of type dict or list: {type(m)}"
+        assert isinstance(m, dict) or isinstance(m, list) or isinstance(m, tuple), f"Is not of type dict or list: {type(m)}"
         output = m
         for field in self.path:
             if isinstance(output, dict):
                 assert field in output, f"No field {field} in path {'.'.join(self.path)}, available keys: {','.join(output.keys())}"
                 output = output[field]
-            elif isinstance(output, list):
+            elif isinstance(output, list) or isinstance(output, tuple):
                 idx = int(field)
                 assert idx < len(output), f"Index {idx} out of range [0,{len(output)})."
                 output = output[idx]
             else:
-                raise Exception("Can only select on dicts and lists")
+                raise Exception("Can only select on dicts, lists, and tuples")
         return output
 
 @define
 class Map(Transform):
     query: Query = field(default=Query())
     key_query: Query | None = field(default=None)
+    on_key: bool = field(default=False)
 
     @override
     def transform(self, m: dict | list) -> list | dict:
-        key_func = identity if self.key_query is None else self.query.eval
         if isinstance(m, list):
             if self.key_query is not None:
+                if self.on_key:
+                    raise Exception("Can only use on_key flag on dicts.")
                 return {self.key_query.eval(i): self.query.eval(i) for i in m}
             else:
                 return [self.query.eval(i) for i in m]
         elif isinstance(m, dict):
             if self.key_query is not None:
-                return {self.key_query.eval(val): self.query.eval(val) for val in m.values()}
+                return {self.key_query.eval(key if self.on_key else val): self.query.eval(val) for key, val in m.items()}
             else:
-                return {key_func(key): self.query.eval(val) for key, val in m.items()}
+                return {key: self.query.eval(val) for key, val in m.items()}
         else:
             raise Exception(f"Mapping incorrect type: {type(m)}")
     
@@ -377,11 +385,14 @@ class BaseQuery(Query):
     
 
     # START Transforms.
+    def noop(self) -> Self:
+        return self._evolve(Noop())
+
     def idx(self, path: str) -> Self:
         return self._evolve(Index(path))
     
-    def map(self, query: Query, key_query: Query | None = None) -> Self:
-        return self._evolve(Map(query, key_query))
+    def map(self, query: Query, key_query: Query | None = None, on_key: bool = False) -> Self:
+        return self._evolve(Map(query, key_query, on_key))
     
     def top(self, num: int = 1, reverse: bool = False) -> Self:
         return self._evolve(Top(num, reverse))
@@ -497,6 +508,8 @@ class BaseQuery(Query):
         return pd.DataFrame(self.eval())
 
 # Public functions
+def noop() -> BaseQuery:
+    return query().noop()
 
 def query(m: dict | None = None) -> BaseQuery:
     return BaseQuery(m)
@@ -504,8 +517,8 @@ def query(m: dict | None = None) -> BaseQuery:
 def idx(path: str) -> BaseQuery:
     return query().idx(path)
 
-def map(_query: Query, key_query: Query | None = None) -> BaseQuery:
-    return query().map(_query, key_query)
+def map(_query: Query, key_query: Query | None = None, on_key: bool = False) -> BaseQuery:
+    return query().map(_query, key_query, on_key)
 
 def top(num: int = 1, reverse: bool = False) -> BaseQuery:
     return query().top(num, reverse)
