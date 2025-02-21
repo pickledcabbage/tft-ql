@@ -1,6 +1,16 @@
 
 export type SessionData = {
-    id: string,
+    user_id: string,
+    session_id: string,
     connected: boolean,
-    joinCode: string,
+    join_code: string,
 };
+
+export const createEmptySessionData = () => {
+    return {
+        user_id: '',
+        session_id: '',
+        connected: false,
+        join_code: '',
+    }
+}

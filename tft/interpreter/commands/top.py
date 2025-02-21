@@ -8,6 +8,7 @@ from tft.queries.aliases import get_champ_aliases
 import tft.ql.expr as ql
 from tft.queries.comps import query_comps, query_top_comps
 import tft.interpreter.validation as valid
+from tft.interpreter.validation import EntityType
 
 
 @register(name='top')
@@ -17,18 +18,29 @@ class TopCommand(Command):
     @override
     def validate(self, inputs: list[str]) -> Any:
         return valid.evaluate_validation(
-            valid.Many(valid.IsChampion()),
-            inputs
+            valid.Many(valid.Or([valid.IsChampion(), valid.IsCluster(), valid.IsField()])),
+            inputs,
+            group=True
         )
     
     @override
     def execute(self, inputs: Any = None) -> Any:
-        champs = inputs
+        print(inputs.keys())
+        champs = inputs['champion']
+        cluster_id = inputs['cluster_id'] if 'cluster_id' in inputs else None
+        filter_field = inputs['field'][0] if 'field' in inputs else None
+
         scoring_function = match_score(champs)
         top_comps = query_top_comps()
-        top_comps = top_comps.filter(ql.idx('units').unary(scoring_function).eq(len(champs))).sort_by(ql.idx('games'), True).top(10).eval()
+        top_comps = top_comps.filter(ql.idx('units').unary(scoring_function).eq(len(champs)))
+        if cluster_id is not None:
+            top_comps = top_comps.filter(ql.idx('cluster').in_set(cluster_id))
+        if filter_field is not None and filter_field['value'] in ['games', 'avg_place']:
+            top_comps = top_comps.sort_by(ql.idx(filter_field['value']), filter_field['direction'] == 'DES')
+        else:
+            top_comps = top_comps.sort_by(ql.idx('games'), True).top(10)
 
-        return top_comps
+        return top_comps.eval()
 
     @override
     def render(self, outputs: Any = None) -> str:

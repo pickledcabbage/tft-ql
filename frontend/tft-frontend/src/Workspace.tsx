@@ -7,7 +7,8 @@ import { QLTool } from "./QLTool";
 import { useState } from "react";
 import path from "path";
 import { ConstructionOutlined } from "@mui/icons-material";
-import { SessionData } from "./SessionData";
+import { createEmptySessionData, SessionData } from "./SessionData";
+import { TftSet } from "./TftSet";
 
 
 const styles = {
@@ -31,7 +32,8 @@ export default function Workspace() {
         children: []
     } as QLToolNode);
     const [toolStateCache, setToolStateCache] = useState<Map<string, any>>(new Map());
-    const [sessionData, setSessionData] = useState<SessionData>({id: '', connected: false, joinCode: ''});
+    const [sessionData, setSessionData] = useState<SessionData>(createEmptySessionData());
+    const [tftSet, setTftSset] = useState<TftSet>({set_id: 'TFTSet13'});
 
     // Helpers for finding nodes.
     const findNode = (node: QLToolNode, path: Array<number>): QLToolNode | null => {

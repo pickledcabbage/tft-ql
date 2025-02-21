@@ -13,6 +13,9 @@ class EntityType(Enum):
     ITEM = 'item'
     TRAIT = 'trait'
     INTEGER = 'integer'
+    LEVEL = 'level'
+    CLUSTER_ID = 'cluster_id'
+    FIELD = 'field'
 
 @attrs.define
 class Entity:
@@ -186,6 +189,52 @@ class IsInteger(Validation):
         except:
             return [], f"Item is not an integer: {first}", inputs[:]
         return [Entity(EntityType.INTEGER, str(number))], None, inputs[1:]
+
+@attrs.define
+class IsLevel(Validation):
+    @override
+    def convert(self, inputs: list[str]) -> tuple[list[Entity], str | None, list[str]]:
+        if len(inputs) == 0:
+            return [], "No number to convert", inputs[:]
+        first = inputs[0]
+        try:
+            if first[:3] != 'lv:':
+                raise 'No lv:'
+            value = int(first[3:])
+        except:
+            return [], f"Item is not a level: {first}", inputs[:]
+        return [Entity(EntityType.LEVEL, str(value))], None, inputs[1:]
+
+@attrs.define
+class IsField(Validation): 
+    @override
+    def convert(self, inputs: list[str]) -> tuple[list[Entity], str | None, list[str]]:
+        if len(inputs) == 0:
+            return [], "No number to convert", inputs[:]
+        first = inputs[0]
+        try:
+            if first[:3] not in ['fa:', 'fd:']:
+                raise 'No fa: or fd:'
+            value = first[3:]
+            direction = 'ASC' if first[:3] == 'fa:' else 'DES'
+        except:
+            return [], f"Item is not a field order: {first}", inputs[:]
+        return [Entity(EntityType.FIELD, {'value': value, 'direction': direction})], None, inputs[1:]
+
+@attrs.define
+class IsCluster(Validation):
+    @override
+    def convert(self, inputs: list[str]) -> tuple[list[Entity], str | None, list[str]]:
+        if len(inputs) == 0:
+            return [], "No number to convert", inputs[:]
+        first = inputs[0]
+        try:
+            if first[:4] != 'cid:':
+                raise 'No cid:'
+            value = int(first[4:])
+        except:
+            return [], f"Item is not a level: {first}", inputs[:]
+        return [Entity(EntityType.CLUSTER_ID, str(value))], None, inputs[1:]
 
 
 def evaluate_validation(validation: Validation, inputs: list[str], group: bool = False) -> list[str] | dict[str, list[str]]:

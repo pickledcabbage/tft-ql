@@ -25,12 +25,13 @@ export default function QLToolStreamer(props: Props) {
 
     useEffect(() => {
         if (props.sessionData.connected && lastSession == null) {
-            setEventLog(eventLog + '\nConnecting to session ' + props.sessionData.joinCode + " as " + props.sessionData.id);
-            setLastSession(props.sessionData.joinCode);
+            setEventLog(eventLog + '\nConnecting to session ' + props.sessionData.join_code + " as " + props.sessionData.user_id);
+            setLastSession(props.sessionData.join_code);
         } else if (!props.sessionData.connected && lastSession != null) {
             setEventLog(eventLog + '\nDisconnected from session ' + lastSession);
             setLastSession(null);
         }
+
     }, [props.sessionData])
 
     useEffect(
@@ -40,15 +41,18 @@ export default function QLToolStreamer(props: Props) {
                 const params = new URLSearchParams({
                     ts: lastTs.toString(),
                 });
-                axios.get(ENDPOINT + '/session/' + props.sessionData.joinCode + '/events?' + params)
+                axios.get(ENDPOINT + '/session/' + props.sessionData.session_id + '/events?' + params)
                     .then(res => {
                         const connected = res.data.connected
-                        const events = res.data.events
+                        const events = res.data.events as Array<{
+                            user_id: string, ts: number, tool: string, data: string
+                        }>
+                        console.log(events)
                         if (connected == null || !connected || !events) return;
-                        const events_array = Array.from(events).sort((a: any, b: any) => (a[0] - b[0]));
+                        const events_array = events.sort((a: any, b: any) => (a.ts - b.ts));
                         if (events_array.length == 0) return;
-                        const ts = parseInt(events_array[events_array.length - 1] as string);
-                        const event_strings = events_array.map((x: any) => '[' + x[1][1] + ']: ' + x[1][0]);
+                        const ts = events_array[events_array.length - 1].ts;
+                        const event_strings = events_array.map((x) => '[' + x.user_id + '][' + x.tool + ']: ' + x.data);
                         setEventLog(eventLog + '\n' + event_strings.join('\n'));
                         setLastTs(ts);
                     })

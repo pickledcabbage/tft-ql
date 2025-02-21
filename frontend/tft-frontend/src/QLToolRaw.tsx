@@ -40,11 +40,20 @@ export default function QLToolRaw(props: Props) {
     )
 
     const fetchData = () => {
-        const params = new URLSearchParams({
-            query,
-        });
+        let params;
+        if (props.sessionData.connected) {
+            params = {
+                session_id: props.sessionData.session_id,
+                user_id: props.sessionData.user_id,
+                query,
+            }
+        } else {
+            params = {
+                query,
+            }
+        }
         setOutput('Loading...');
-        axios.get(ENDPOINT + '/test?' + params).catch(e => setOutput('Error: ' + e)).then(res => {
+        axios.get(ENDPOINT + '/test?' + new URLSearchParams(params)).catch(e => setOutput('Error: ' + e)).then(res => {
             if (res == null) {
                 setOutput('Bad response.');
 
@@ -57,13 +66,6 @@ export default function QLToolRaw(props: Props) {
                 props.cacheState({ output: res.data.data });
             }
         })
-        if (props.sessionData.connected) {
-            // Record event.
-            axios.post(ENDPOINT + '/session/' + props.sessionData.joinCode + '/events', {
-                event: query,
-                id: props.sessionData.id
-            }).catch(e => console.log("Error recording event: " + e)).then(res => {});
-        }
     }
 
     return (

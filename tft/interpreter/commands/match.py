@@ -18,28 +18,35 @@ class MatchCommand(Command):
     def validate(self, inputs: list[str]) -> Any:
         valid_inputs = valid.evaluate_validation(
             valid.Sequence([
-                valid.Optional(valid.IsInteger()),
-                valid.Many(valid.IsChampion())
+                valid.Many(valid.Or([valid.IsCluster(), valid.IsLevel(), valid.IsField(), valid.IsChampion()])),
             ]),
             inputs,
             group=True
         )
         # Yes, level filter is a string.
-        level_filter = None if len(valid_inputs['integer']) == 0 else valid_inputs['integer'][0]
-        return level_filter, valid_inputs['champion']
+        level_filter = None if 'level' not in valid_inputs else valid_inputs['level']
+        cluster_filter = None if 'cluster_id' not in valid_inputs else valid_inputs['cluster_id']
+        field_filter = None if len(valid_inputs['field']) == 0 else valid_inputs['field'][0]
+        return level_filter, cluster_filter, field_filter, valid_inputs['champion']
     
     @override
     def execute(self, inputs: Any = None) -> Any:
-        level_filter, champs = inputs
+        level_filter, cluster_filter, field_filter, champs = inputs
         scoring_function = match_score(champs)
         early_comps = query_comps()
         if level_filter is not None:
-            early_comps = early_comps.filter(ql.idx('level').eq(level_filter))
+            early_comps = early_comps.filter(ql.idx('level').in_set(level_filter))
+        if cluster_filter is not None:
+            early_comps = early_comps.filter(ql.idx('cluster').in_set(cluster_filter))
         early_comps = early_comps.map(ql.extend({
             'match_score': ql.unary(lambda x: scoring_function(x['units']) * 10000000 + x['games'])
-        })).sort_by(ql.idx('match_score'), True).top(10).eval()
+        })).sort_by(ql.idx('match_score'), True)
+        if field_filter is not None and field_filter['value'] in ['match_score', 'games', 'level']:
+            early_comps = early_comps.sort_by(ql.idx(field_filter['value']), field_filter['direction'] == 'DES')
+        else:
+            early_comps = early_comps.sort_by(ql.idx('match_score'), True).top(10)
 
-        return early_comps
+        return early_comps.eval()
 
     @override
     def render(self, outputs: Any = None) -> str:

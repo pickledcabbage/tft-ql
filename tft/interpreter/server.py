@@ -2,6 +2,8 @@
 poetry run python tft/interpreter/server.py
 """
 # Import all commands and registry.
+import pymongo
+import pandas as pd
 import uuid
 import time
 import attrs
@@ -13,43 +15,40 @@ from tft.interpreter.commands.registry import ValidationException
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 
+from tft.config import DB
+
 app = Flask(__name__)
 cors = CORS(app) # allow CORS for all domains on all routes.
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-# Our session database for now.
-SESSIONS = dict()
+def get_ts() -> pd.Timestamp:
+    '''Creates a timestamp to use for database sessions.'''
+    return pd.Timestamp.now()
 
-@attrs.define
-class Session:
-    join_code: str = attrs.field()
-    events: dict[int, tuple[str, str]] = attrs.define()
-
-    # This can't handle simultaneous events, lol.
-    def get_events(self, ts: int = 0) -> list[tuple[int, str]]:
-        return list(filter(lambda item: item[0] > ts, self.events.items()))
-    
-    def add_event(self, event: str, id: str) -> int:
-        ts = int(time.time())
-        self.events[ts] = (event, id)
-        return ts
-        
-
-def generate_join_code():
-    def gen():
-        return ''.join([str(random.randint(0, 9)) for i in range(4)])
-    # This is inefficient, but works for now.
-    join_code = gen()
-    while (join_code in SESSIONS):
-        join_code = gen()
-    return join_code
+def create_event(session_id: str, user_id: str, tool: str, data: str):
+    '''Creates an event for the session.'''
+    client = pymongo.MongoClient(DB)['tft']['session_events']
+    client.insert_one({
+        'ts': int(get_ts().timestamp()),
+        'session_id': session_id,
+        'user_id': user_id,
+        'tool': tool,
+        'data': data
+    })
 
 @app.route('/test')
 @cross_origin()
 def read_root():
+    '''Endpoint that runs core interpreter commands while we migrate to a frontend.'''
     query = request.args.get('query')
+    session_id = request.args.get('session_id')
+    user_id = request.args.get('user_id')
+
+    user_id = user_id if user_id is not None else 'anon'
     if query is None:
         return {'data': ''}
+    
+    # Old interpreter code.
     inp = query.strip().lower()
     parts = [part for part in inp.split(' ') if part != ''] # We shouldn't break with multiple spaces.
     command_name = parts[0]
@@ -62,6 +61,10 @@ def read_root():
     try:
         validated_outputs = command.validate(args)
         outputs = command.execute(validated_outputs)
+        # Store an event.
+        if session_id is not None:
+            create_event(session_id, user_id, 'QUERY', query)
+
         return {'data': command.render(outputs)}
     except ValidationException as e:
         return {'error': str(e)}
@@ -70,63 +73,92 @@ def read_root():
 @app.route('/session/create', methods=['GET'])
 @cross_origin()
 def create_session():
-    id = str(uuid.uuid4())[:6]
-    join_code = generate_join_code()
-    SESSIONS[join_code] = Session(join_code=join_code, events=dict())
+    '''Creates a session.'''
+    ts = get_ts()
+    day_ago = ts + pd.Timedelta(days=-1)
+    client = pymongo.MongoClient(DB)['tft']['session']
+    session = None
+    # Try to create session.
+    for _ in range(5):
+        code = ''.join([str(random.randint(0, 9)) for i in range(4)])
+        maybe_session = client.find_one({'join_code': code, 'ts': {'$gt': int(day_ago.timestamp())}})
+        if maybe_session is None:
+            # Create a session.
+            session = {
+                'join_code': code,
+                'ts': int(ts.timestamp()),
+                'id': str(uuid.uuid4()),
+            }
+            client.insert_one(session)
+            break
+    if session is None:
+        return {
+            'connected': False,
+            'error': 'Failed to create a session'
+        }
+    
     return {
-        'id': id,
-        'join_code': join_code,
-        'connected': True,
+        'join_code': session['join_code'],
+        'id': session['id'],
+        'connected': True
     }
 
 @app.route('/session/<join_code>', methods=['GET'])
 @cross_origin()
 def join_session(join_code: str):
-    id = str(uuid.uuid4())[:6]
-    if join_code not in SESSIONS:
+    '''Joins an existing session.'''
+    ts = get_ts()
+    day_ago = ts + pd.Timedelta(days=-1)
+    client = pymongo.MongoClient(DB)['tft']['session']
+    maybe_session = client.find_one({'join_code': join_code, 'ts': {'$gt': int(day_ago.timestamp())}})
+    if maybe_session is None:
         return {
-            'connected': False,
+            'connected': False
         }
+    # Maybe we refresh the session?
     return {
-        'id': id,
+        'id': maybe_session['id'],
         'join_code': join_code,
         'connected': True
     }
 
-@app.route('/session/<join_code>/events', methods=['GET', 'POST'])
+@app.route('/session/<session_id>/events', methods=['GET'])
 @cross_origin()
-def get_events(join_code):
-    if join_code not in SESSIONS:
-            return {
-                'connected': False
-            }
-    if request.method == 'GET':
-        ts = request.args.get('ts', type=int)
-        if ts is None:
-            ts = 0
+def get_session_events(session_id: str):
+    '''Gets all events for a session from a particular timestamp.'''
+    ts = request.args.get('ts')
+    if ts is None:
         return {
-            'connected': True,
-            'events': SESSIONS[join_code].get_events(ts)
+            'error': 'No ts passed.'
         }
-    elif request.method == 'POST':
-        data = request.get_json()
-        print(data)
-        if 'event' not in data:
-            return {
-                'connected': True,
-                'error': 'No event field passed.'
-            }
-        if 'id' not in data:
-            return {
-                'connected': True,
-                'error': 'No id field passed.'
-            }
+    ts = int(ts)
+    client = pymongo.MongoClient(DB)['tft']['session']
+    day_ago = get_ts() + pd.Timedelta(days=-1)
+    maybe_session = client.find_one({'id': session_id, 'ts': {'$gt': int(day_ago.timestamp())}})
+    if maybe_session is None:
+        return {
+            'error': 'Session not found.'
+        }
+    # Only query up to a day ago.
+    ts = max(ts, int(day_ago.timestamp()))
+    client = pymongo.MongoClient(DB)['tft']['session_events']
+    events = [{'user_id': event['user_id'], 'ts': event['ts'], 'tool': event['tool'], 'data': event['data']} for event in client.find({'session_id': session_id, 'ts': {'$gt': ts}})]
+    return {
+        'events': events,
+        'connected': True,
+    }
 
-        ts = SESSIONS[join_code].add_event(data['event'], data['id'])
-        return {
-            'connected': True,
-            'ts': ts,
-        }
+   
+@app.route('/alias/<tft_set>/<alias_type>', methods=['GET'])
+@cross_origin()
+def get_item_aliases(tft_set: str, alias_type: str):
+    client = pymongo.MongoClient(DB)['tft']['alias']
+    return {
+        'aliases': [
+            {'alias': i['alias'], 'value': i['value']} for i in client.find({'set': tft_set, 'type': alias_type})
+        ]
+    }
+
 
 
 
