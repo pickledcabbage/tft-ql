@@ -1,17 +1,16 @@
-import { Box, Button, Card, Container, Grid2, IconButton, Typography } from "@mui/material";
+import { Box, Card, Container, Grid2, IconButton, Typography } from "@mui/material";
 import { NAME_MAP, QLTool } from "./QLTool";
-import QLToolOpen from "./QLToolOpen";
-import QLToolSplit from "./QLToolSplit";
 import CloseIcon from '@mui/icons-material/Close';
 import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
-import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 import QLToolRaw from "./QLToolRaw";
-import { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import OpenQLToolModal from "./OpenQLToolModal";
 import QLToolHome from "./QLToolHome";
 import { SessionData } from "./SessionData";
 import QLToolStreamer from "./QLToolStreamer";
+import { useFocusManager, useFocusWithin } from 'react-aria';
 
 const styles = {
     container: {
@@ -59,55 +58,97 @@ type Props = {
     cacheState: (path: Array<number>, state: any) => void,
     sessionData: SessionData,
     setSessionData: (sessionData: SessionData) => void,
+    isFocused: boolean,
+    requestFocus: (path: Array<number>) => void,
+    moveFocus: (path: Array<number>, direction: 'left' | 'right' | 'up' | 'down') => void,
 };
 
 export default function QLToolContainer(props: Props) {
     const [modalOpen, setModalOpen] = useState<boolean>(false);
 
+    // Checks to see if we are focused within this container.
+    let { focusWithinProps } = useFocusWithin({
+        onFocusWithin: (e) => {
+            props.requestFocus(props.containerPath);
+        },
+        onFocusWithinChange: (isFocusWithin) => {
+            if (isFocusWithin) {
+                props.requestFocus(props.containerPath);
+            }
+        }
+    });
+
+
+    // Keyboard commands.
+    const handleKeyDown = (event: any) => {
+        if (!props.isFocused) return;
+        if (event.ctrlKey && event.key === 'q') {
+            setModalOpen(true);
+        }
+        if (event.ctrlKey) {
+            if (event.key === 'ArrowUp') {
+                props.moveFocus(props.containerPath, 'up');
+            }
+            if (event.key === 'ArrowDown') {
+                props.moveFocus(props.containerPath, 'down');
+            }
+            if (event.key === 'ArrowLeft') {
+                props.moveFocus(props.containerPath, 'left');
+            }
+            if (event.key === 'ArrowRight') {
+                props.moveFocus(props.containerPath, 'right');
+            }
+        }
+    };
+    useEffect(() => {
+        if (!props.isFocused) {
+            return;
+        }
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown); // Clean up listener
+        };
+    }, [props.isFocused]);
+
+
+
     // Fetches a tool and passes it some filtered props. Should probably just pass all of them.
     const getTool = (tool: QLTool) => {
         switch (tool) {
-            case QLTool.TEST:
-                return (<div>My Test tool!</div>);
-            case QLTool.OPEN:
-                return (<QLToolOpen replaceSelf={(new_tool: QLTool) => props.replaceTool(props.containerPath, new_tool)} />);
-            case QLTool.SPLIT:
-                return (<QLToolSplit splitSelf={(new_tool: QLTool, direction: 'vertical' | 'horizontal') => props.splitNode(props.containerPath, direction, new_tool)} />)
-            case QLTool.RAW:
-                return <QLToolRaw sessionData={props.sessionData} cachedState={props.cachedState} cacheState={(state: any) => props.cacheState(props.containerPath, state)}/>
+            case QLTool.QUERY:
+                return <QLToolRaw sessionData={props.sessionData} cachedState={props.cachedState} cacheState={(state: any) => props.cacheState(props.containerPath, state)} />
             case QLTool.HOME:
-                return <QLToolHome sessionData={props.sessionData} setSessionData={props.setSessionData}/>
+                return <QLToolHome sessionData={props.sessionData} setSessionData={props.setSessionData} />
             case QLTool.STREAMER:
-                return <QLToolStreamer sessionData={props.sessionData}/>
+                return <QLToolStreamer sessionData={props.sessionData} />
             default:
                 throw new Error('Invalid tool type: ' + tool);
         }
     }
 
     return (
-        <Box sx={styles.container}>
-            <OpenQLToolModal isOpen={modalOpen} setModalOpen={setModalOpen} replaceTool={(tool: QLTool) => props.replaceTool(props.containerPath, tool)}/>
+        <Box sx={styles.container} {...focusWithinProps}>
+            <OpenQLToolModal isOpen={modalOpen} setModalOpen={setModalOpen} replaceTool={(tool: QLTool) => { props.replaceTool(props.containerPath, tool); props.requestFocus(props.containerPath); }} />
             <Grid2 sx={styles.toolbar}>
-                <Typography sx={{ flexGrow: 3, display: 'inline-block', marginLeft: '4px'}}>
-                    {NAME_MAP.get(props.tool)}
+                <Typography sx={{ flexGrow: 3, display: 'inline-block', marginLeft: '4px' }}>
+                    {(NAME_MAP.get(props.tool) ?? 'Unknown') + (props.isFocused ? '*' : '')}
                 </Typography>
                 <IconButton sx={styles.button} onClick={() => setModalOpen(true)}>
-                    <AddIcon sx={styles.icon}/>
+                    <SearchIcon sx={styles.icon} />
                 </IconButton>
-                <IconButton sx={styles.button} onClick={() => props.splitNode(props.containerPath, 'horizontal', QLTool.OPEN)}>
-                    <HorizontalSplitIcon sx={styles.icon}/>
+                <IconButton sx={styles.button} onClick={() => props.splitNode(props.containerPath, 'horizontal', QLTool.QUERY)}>
+                    <HorizontalSplitIcon sx={styles.icon} />
                 </IconButton>
-                <IconButton sx={styles.button} onClick={() => props.splitNode(props.containerPath, 'vertical', QLTool.OPEN)}>
-                    <VerticalSplitIcon sx={styles.icon}/>
+                <IconButton sx={styles.button} onClick={() => props.splitNode(props.containerPath, 'vertical', QLTool.QUERY)}>
+                    <VerticalSplitIcon sx={styles.icon} />
                 </IconButton>
                 <IconButton sx={styles.button} onClick={() => props.closeNode(props.containerPath)}>
-                    <CloseIcon sx={styles.icon}/>
+                    <CloseIcon sx={styles.icon} />
                 </IconButton>
             </Grid2>
             <Card sx={styles.card}>
                 {getTool(props.tool)}
             </Card>
-
         </Box>
     );
 };

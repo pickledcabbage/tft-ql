@@ -191,19 +191,32 @@ class IsInteger(Validation):
         return [Entity(EntityType.INTEGER, str(number))], None, inputs[1:]
 
 @attrs.define
-class IsLevel(Validation):
+class IsPrefix(Validation):
+    prefix: str = attrs.field()
+    val_type: type = attrs.field()
+    delim: str = attrs.field()
+    entity_type: EntityType = attrs.field()
+
     @override
     def convert(self, inputs: list[str]) -> tuple[list[Entity], str | None, list[str]]:
         if len(inputs) == 0:
-            return [], "No number to convert", inputs[:]
+            return [], "No values to convert", inputs[:]
         first = inputs[0]
         try:
-            if first[:3] != 'lv:':
-                raise 'No lv:'
-            value = int(first[3:])
+            if first[:len(self.prefix)] != self.prefix:
+                raise f'No {self.prefix}'
+            values = [self.val_type(i) for i in first[len(self.prefix):].split(',')]
         except:
-            return [], f"Item is not a level: {first}", inputs[:]
-        return [Entity(EntityType.LEVEL, str(value))], None, inputs[1:]
+            return [], f"Value has wrong type: {first}", inputs[:]
+        return [Entity(self.entity_type, str(val)) for val in values], None, inputs[1:]
+
+
+@attrs.define
+class IsLevel(Validation):
+    @override
+    def convert(self, inputs: list[str]) -> tuple[list[Entity], str | None, list[str]]:
+        prefix = IsPrefix('lv:', int, ',', EntityType.LEVEL)
+        return prefix.convert(inputs)
 
 @attrs.define
 class IsField(Validation): 
@@ -225,16 +238,8 @@ class IsField(Validation):
 class IsCluster(Validation):
     @override
     def convert(self, inputs: list[str]) -> tuple[list[Entity], str | None, list[str]]:
-        if len(inputs) == 0:
-            return [], "No number to convert", inputs[:]
-        first = inputs[0]
-        try:
-            if first[:4] != 'cid:':
-                raise 'No cid:'
-            value = int(first[4:])
-        except:
-            return [], f"Item is not a level: {first}", inputs[:]
-        return [Entity(EntityType.CLUSTER_ID, str(value))], None, inputs[1:]
+        prefix = IsPrefix('cid:', int, ',', EntityType.CLUSTER_ID)
+        return prefix.convert(inputs)
 
 
 def evaluate_validation(validation: Validation, inputs: list[str], group: bool = False) -> list[str] | dict[str, list[str]]:

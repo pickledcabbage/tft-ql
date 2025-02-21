@@ -25,6 +25,11 @@ type QLToolNode = {
     children: Array<QLToolNode>,
 }
 
+const pathsAreEqual = (pathA: Array<number>, pathB: Array<number>) => {
+    if (pathA.length != pathB.length) return false;
+    return pathA.every((val, idx) => val === pathB[idx]);
+}
+
 export default function Workspace() {
     const [state, setState] = useState<QLToolNode>({
         type: 'tool',
@@ -33,6 +38,7 @@ export default function Workspace() {
     } as QLToolNode);
     const [toolStateCache, setToolStateCache] = useState<Map<string, any>>(new Map());
     const [sessionData, setSessionData] = useState<SessionData>(createEmptySessionData());
+    const [focusedPath, setFocusedPath] = useState<Array<number> | null>(null);
     const [tftSet, setTftSset] = useState<TftSet>({set_id: 'TFTSet13'});
 
     // Helpers for finding nodes.
@@ -57,7 +63,7 @@ export default function Workspace() {
     }
 
     // Splits a node vertically or horizontally.
-    const splitNode = (path: Array<number>, direction: 'horizontal' | 'vertical', tool: QLTool = QLTool.OPEN) => {
+    const splitNode = (path: Array<number>, direction: 'horizontal' | 'vertical', tool: QLTool = QLTool.QUERY) => {
         // The case where there is only one node.
         if (path.length == 0) {
             const new_state = {
@@ -131,7 +137,7 @@ export default function Workspace() {
         if (path.length == 0 || new_state.children.length == 0) {
             setState({
                 type: 'tool',
-                tool: QLTool.OPEN,
+                tool: QLTool.QUERY,
                 children: [],
             } as QLToolNode);
         } else {
@@ -146,11 +152,75 @@ export default function Workspace() {
         setToolStateCache(newCache);
     }
 
+    // Allows a container to request focus.
+    const requestFocus = (path: Array<number> | null) => {
+        if (path == null) return;
+        setFocusedPath(path);
+    }
+
+    // Returns the path of the first tool found in parent path.
+    const findFirstToolPath = (path: Array<number>): Array<number> | null => {
+        let node = state;
+        let newPath = path.slice();
+        for (let i = 0; i < path.length; ++i) {
+            if (i >= node.children.length) return null;
+            node = node.children[i];
+        }
+        console.log(node)
+        while (node.type != 'tool') {
+            console.log(node.children.length)
+            if (node.children.length == 0) return null;
+            node = node.children[0];
+            newPath.push(0);
+        }
+        return newPath;
+    }
+
+    // Moves tab focus. Does not change focus if valid path is not found.
+    const moveFocus = (path: Array<number>, direction: 'left' | 'right' | 'up' | 'down') => {
+        if (path.length == 0) {
+            return;
+        }
+        const parentPath = path.slice(0, -1)
+        const parentNode = findNode(state, parentPath);
+        if (parentNode == null) {
+            return;
+        }
+        
+        const horizMove = ['left', 'right'].includes(direction);
+        const vertMove = ['up', 'down'].includes(direction);
+        const idx = path[0];
+        // A "vertical" node means it is split vertically but its orientation is horizontal.
+        if (parentNode.type == 'tool' || (horizMove && parentNode.type != 'vertical') || (vertMove && parentNode.type != 'horizontal')) {
+            // Go to parent.
+            moveFocus(parentPath, direction);
+            return;
+        }
+        if (horizMove) {
+            const newIdx = idx + (direction == 'left' ? -1 : 1);
+            if (newIdx == -1 || parentNode.children.length <= newIdx) {
+                // Go to parent.
+                moveFocus(parentPath, direction);
+                return;
+            }
+            requestFocus(findFirstToolPath(parentPath.concat([newIdx])));
+        } else {
+            const newIdx = idx + (direction == 'up' ? -1 : 1);
+            if (newIdx == -1 || parentNode.children.length <= newIdx) {
+                // Go to parent.
+                moveFocus(parentPath, direction);
+                return;
+            }
+            requestFocus(findFirstToolPath(parentPath.concat([newIdx])));
+        }
+    }
+
     // Generates the containers.
     const createReflexContainers = (node?: QLToolNode, path?: Array<number>) => {
         if (node == null || path == null) return (<div />);
         if (node.type == 'tool' && node.tool != null) {
-            return (<QLToolContainer sessionData={sessionData} setSessionData={setSessionData} cachedState={toolStateCache.get(path.join(':'))} cacheState={cacheState} tool={node.tool} containerPath={path} replaceTool={replaceTool} splitNode={splitNode} closeNode={closeNode} />)
+            const isFocused = focusedPath != null && pathsAreEqual(focusedPath, path);
+            return (<QLToolContainer moveFocus={moveFocus} isFocused={isFocused} requestFocus={requestFocus} sessionData={sessionData} setSessionData={setSessionData} cachedState={toolStateCache.get(path.join(':'))} cacheState={cacheState} tool={node.tool} containerPath={path} replaceTool={replaceTool} splitNode={splitNode} closeNode={closeNode} />)
         } else if ((node.type == 'vertical' || node.type == 'horizontal') && node.children != null) {
             const elements = node.children.map((value, index) => (
                 <ReflexElement className={index.toString()}>

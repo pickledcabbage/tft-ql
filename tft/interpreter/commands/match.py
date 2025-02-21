@@ -41,7 +41,7 @@ class MatchCommand(Command):
         early_comps = early_comps.map(ql.extend({
             'match_score': ql.unary(lambda x: scoring_function(x['units']) * 10000000 + x['games'])
         })).sort_by(ql.idx('match_score'), True)
-        if field_filter is not None and field_filter['value'] in ['match_score', 'games', 'level']:
+        if field_filter is not None and field_filter['value'] in ['match_score', 'games', 'level', 'avg_place']:
             early_comps = early_comps.sort_by(ql.idx(field_filter['value']), field_filter['direction'] == 'DES')
         else:
             early_comps = early_comps.sort_by(ql.idx('match_score'), True).top(10)

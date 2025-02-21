@@ -37,7 +37,10 @@ export default function QLToolStreamer(props: Props) {
     useEffect(
         () => {
             const interval = setInterval(() => {
-                if (!props.sessionData.connected) return;
+                if (!props.sessionData.connected) {
+                    setEventLog('Not connected to a session.');
+                    return;
+                }
                 const params = new URLSearchParams({
                     ts: lastTs.toString(),
                 });
