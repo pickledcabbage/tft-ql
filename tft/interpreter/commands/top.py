@@ -25,7 +25,6 @@ class TopCommand(Command):
     
     @override
     def execute(self, inputs: Any = None) -> Any:
-        print(inputs.keys())
         champs = inputs['champion']
         cluster_id = inputs['cluster_id'] if 'cluster_id' in inputs else None
         filter_field = inputs['field'][0] if 'field' in inputs else None

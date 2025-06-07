@@ -39,7 +39,7 @@ export default function Workspace() {
     const [toolStateCache, setToolStateCache] = useState<Map<string, any>>(new Map());
     const [sessionData, setSessionData] = useState<SessionData>(createEmptySessionData());
     const [focusedPath, setFocusedPath] = useState<Array<number> | null>(null);
-    const [tftSet, setTftSset] = useState<TftSet>({set_id: 'TFTSet13'});
+    const [tftSet, setTftSset] = useState<TftSet>({set_id: 'TFTSet14'});
 
     // Helpers for finding nodes.
     const findNode = (node: QLToolNode, path: Array<number>): QLToolNode | null => {

@@ -6,6 +6,9 @@ import tft.ql.expr as ql
 from tft.config import DB
 
 def main():
+    """
+    Takes local lists of aliases and uploads them to the DB.
+    """
     client = pymongo.MongoClient(DB)
     tft_db = client['tft']
     alias_col = tft_db['alias']

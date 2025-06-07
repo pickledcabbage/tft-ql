@@ -1,3 +1,5 @@
+from tft.config import CHAMP_ALIAS_FILE, ITEM_ALIAS_FILE, TRAIT_ALIAS_FILE
+
 ITEM_ALIASES = None
 CHAMP_ALIASES = None
 TRAIT_ALIASES = None
@@ -22,13 +24,13 @@ def read_map_csv(filename: str) -> dict:
 def get_champ_aliases():
     global CHAMP_ALIASES
     if CHAMP_ALIASES is None:
-        CHAMP_ALIASES = read_map_csv('config/champ_aliases.csv')
+        CHAMP_ALIASES = read_map_csv(CHAMP_ALIAS_FILE)
     return CHAMP_ALIASES
 
 def get_item_aliases():
     global ITEM_ALIASES
     if ITEM_ALIASES is None:
-        ITEM_ALIASES = read_map_csv('config/item_aliases.csv')
+        ITEM_ALIASES = read_map_csv(ITEM_ALIAS_FILE)
     return ITEM_ALIASES
 
 def get_trait_aliases():
@@ -37,7 +39,7 @@ def get_trait_aliases():
     """
     global TRAIT_ALIASES
     if TRAIT_ALIASES is None:
-        TRAIT_ALIASES = read_map_csv('config/trait_aliases.csv')
+        TRAIT_ALIASES = read_map_csv(TRAIT_ALIAS_FILE)
     return TRAIT_ALIASES
 
 def get_hard_trait_aliases():

@@ -11,11 +11,12 @@ import random
 import tft.client.meta as meta
 import tft.interpreter.commands.api as commands
 from tft.interpreter.commands.registry import ValidationException
+import tft.ql.expr as ql
 
 from flask import Flask, request
 from flask_cors import CORS, cross_origin
 
-from tft.config import DB
+from tft.config import DB, IP, PORT
 
 app = Flask(__name__)
 cors = CORS(app) # allow CORS for all domains on all routes.
@@ -35,6 +36,47 @@ def create_event(session_id: str, user_id: str, tool: str, data: str):
         'tool': tool,
         'data': data
     })
+
+@app.route('/set_info')
+@cross_origin()
+def get_set_info():
+    '''Endpoint to fetch set info.'''
+    tft_set = ql.query(meta.get_comp_data()).idx('tft_set').eval()
+
+    # Items.
+    all_set_data = ql.query(meta.get_set_data())
+    items = all_set_data.idx('items').map(ql.sub(
+        {
+            'apiName': ql.idx('apiName'),
+            'composition': ql.idx('composition'),
+            'name': ql.idx('name')
+        }
+    )).eval()
+
+    # Traits.
+    traits = all_set_data.idx('traits').filter(ql.contains('units')).map(ql.sub({
+        'apiName': ql.idx('apiName'),
+        'name': ql.idx('name'),
+        'tiers': ql.idx('effects').map(ql.idx('minUnits')),
+        'units': ql.idx('units').map(ql.idx('unit'))
+    })).eval()
+    # The champs data doesn't use the api name for traits.
+    soft_to_hard_traits = {x['name']: x['apiName'] for x in traits}
+
+    # Units.
+    champs = all_set_data.idx('units').filter(ql.idx('traits').length().gt(0)).map(ql.sub({
+        'apiName': ql.idx('apiName'),
+        'name': ql.idx('name'),
+        'traits': ql.idx('traits').map(ql.replace(soft_to_hard_traits)),
+        'cost': ql.idx('cost')
+    })).eval()
+
+    return {
+        'tft_set': tft_set,
+        'items': items,
+        'traits': traits,
+        'champs': champs
+    }
 
 @app.route('/test')
 @cross_origin()
@@ -168,4 +210,4 @@ if __name__ == '__main__':
     commands.COMMAND_REGISTRY['warm'].execute()
     print('Caches warmed, starting server.')
 
-    app.run(host='0.0.0.0', port=9000)
+    app.run(host=IP, port=PORT)

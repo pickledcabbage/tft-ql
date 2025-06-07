@@ -1,11 +1,13 @@
 import pymongo
 
-from tft.client.meta import get_comp_data
-from tft.queries.aliases import get_champ_aliases, get_item_aliases
 import tft.ql.expr as ql
 from tft.config import DB
 
 def main():
+    """
+    Creates session and session_events tables in MongoDB.
+    """
+
     client = pymongo.MongoClient(DB)
     tft_db = client['tft']
     session_col = tft_db['session']

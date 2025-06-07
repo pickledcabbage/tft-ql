@@ -1,0 +1,13 @@
+# Need to sync this to the frontend.
+frontend:
+  endpoint: 'http://172.30.111.252:9001'
+
+backend:
+  ip: '0.0.0.0'
+  port: 10000
+  db: "mongodb://127.0.0.1:32769/?directConnection=true"
+
+files:
+  champ_alias: 'config/champ_aliases.csv'
+  item_alias: 'config/item_aliases.csv'
+  trait_alias: 'config/trait_aliases.csv'

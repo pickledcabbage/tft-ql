@@ -16,10 +16,10 @@ class MetaTFTApis(Enum):
     CHAMP_ITEMS = 'champ_items'
 
 URLS = {
-    MetaTFTApis.COMPS_DATA: "https://api2.metatft.com/tft-comps-api/comps_data",
-    MetaTFTApis.SET_DATA: "https://data.metatft.com/lookups/TFTSet13_latest_en_us.json",
-    MetaTFTApis.CHAMP_ITEMS: "https://api2.metatft.com/tft-stat-api/unit_detail",
-    MetaTFTApis.COMP_DETAILS: "https://api2.metatft.com/tft-comps-api/comp_details"
+    MetaTFTApis.COMPS_DATA: "https://api-hc.metatft.com/tft-comps-api/comps_data",
+    MetaTFTApis.SET_DATA: "https://data.metatft.com/lookups/TFTSet14_latest_en_us.json",
+    MetaTFTApis.CHAMP_ITEMS: "https://api-hc.metatft.com/tft-stat-api/unit_detail",
+    MetaTFTApis.COMP_DETAILS: "https://api-hc.metatft.com/tft-comps-api/comp_details"
 }
 
 CACHE_PATH = 'res/cache/cache.json'
