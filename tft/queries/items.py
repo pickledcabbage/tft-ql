@@ -16,12 +16,18 @@ class ItemType(Enum):
     # TRAIT = 'trait'
 
 def query_component_items():
+    """
+    Returns a query of all component items.
+    """
     component_names = query_buildable_items().map(ql.idx('composition')).vals().flatten().unary(set).eval()
     return ql.query(meta.get_set_data()).idx('items').filter(ql.idx('apiName').in_set(component_names)).map(ql.sub({
         'name': ql.idx('en_name')
     }), ql.idx('apiName'))
 
 def query_buildable_items():
+    """
+    Returns a query of all buildable items.
+    """
     return ql.query(meta.get_set_data()).idx('items').filter(ql.idx('composition').len().eq(2)).map(ql.sub({
         'name': ql.idx('en_name'),
         'composition': ql.idx('composition'),
@@ -29,6 +35,9 @@ def query_buildable_items():
     }), ql.idx('apiName'))
 
 def get_item_name_map():
+    """
+    Returns a dictionary to map from API names to human readable names. Use for displaying data.
+    """
     global ITEM_NAME_MAP
     if ITEM_NAME_MAP is None:
         ITEM_NAME_MAP = {}
@@ -48,19 +57,28 @@ def get_item_name_map():
         ITEM_NAME_MAP['TFT5_Item_BloodthirsterRadiant'] = "Radiant Bloodthirster"
     return ITEM_NAME_MAP
 
-def get_components():
+def get_components() -> set[str]:
+    """
+    Returns a set of all component item API names. Caches it in a global variable.
+    """
     global COMPONENT_ITEMS
     if COMPONENT_ITEMS is None:
         COMPONENT_ITEMS = set(query_component_items().keys().eval())
     return COMPONENT_ITEMS
 
-def get_completed_items():
+def get_completed_items() -> set[str]:
+    """
+    Returns a set of all completed item API names. Caches it in a global variable.
+    """
     global COMPLETED_ITEMS
     if COMPLETED_ITEMS is None:
         COMPLETED_ITEMS = set(query_buildable_items().keys().eval())
     return COMPLETED_ITEMS
 
-def get_recipes():
+def get_recipes() -> dict[str, list[str]]:
+    """
+    Returns a dictionary mapping completed items to a list of their component items. Caches it in a global variable.
+    """
     global RECIPES
     if RECIPES is None:
         RECIPES = query_buildable_items().map(ql.idx('composition')).eval()

@@ -6,6 +6,17 @@ TRAIT_ALIASES = None
 HARD_TRAIT_ALIASES = None
 
 def read_map_csv(filename: str) -> dict:
+    """
+    Takes an alias CSV file and converts it to a dictionary mapping each alias to
+    the API name.
+    Ex: A row could be as such:
+    TFT14_Fiddlesticks,fiddlesticks,fidd,fid
+    
+    This would create the following alias dictionary entries:
+    fiddlesticks -> TFT14_Fiddlesticks
+    fidd         -> TFT14_Fiddlesticks
+    fid          -> TFT14_Fiddlesticks
+    """
     alias_dict = {}
     with open(filename, 'r') as f:
         for row in f:
@@ -22,19 +33,28 @@ def read_map_csv(filename: str) -> dict:
     return alias_dict
 
 def get_champ_aliases():
+    """
+    Gets the champion aliases and stores them in a global variable.
+    """
     global CHAMP_ALIASES
     if CHAMP_ALIASES is None:
         CHAMP_ALIASES = read_map_csv(CHAMP_ALIAS_FILE)
     return CHAMP_ALIASES
 
 def get_item_aliases():
+    """
+    Gets the item aliases and stores them in a global variable.
+    """
     global ITEM_ALIASES
     if ITEM_ALIASES is None:
         ITEM_ALIASES = read_map_csv(ITEM_ALIAS_FILE)
     return ITEM_ALIASES
 
 def get_trait_aliases():
-    """This one converts to the soft names. Ex: 'frost' -> 'Frost'
+    """
+    Gets the trait aliases and stores them in a global variable.
+    This one converts to the soft names.
+    Ex: frost -> Frost
     Use this one when looking at champs with a trait.
     """
     global TRAIT_ALIASES
@@ -43,7 +63,11 @@ def get_trait_aliases():
     return TRAIT_ALIASES
 
 def get_hard_trait_aliases():
-    """This one converts to the API names."""
+    """
+    Gets the hard trait aliases and stores them in a global variable.
+    This one converts to the API names.
+    Ex: divinicorp -> TFT14_Divinicorp
+    """
     global HARD_TRAIT_ALIASES
     if HARD_TRAIT_ALIASES is None:
         HARD_TRAIT_ALIASES = read_map_csv('config/hard_trait_aliases.csv')
