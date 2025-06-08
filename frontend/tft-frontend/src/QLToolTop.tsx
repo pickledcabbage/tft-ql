@@ -56,14 +56,13 @@ export default function QLToolTop(props: Props) {
         axios.get(ENDPOINT + '/test?' + new URLSearchParams(params)).catch(e => setOutput('Error: ' + e)).then(res => {
             if (res == null) {
                 setOutput('Bad response.');
-
             } else {
                 if (res.data.error != null) {
                     setOutput(res.data.error);
                 } else {
                     setOutput(res.data.data);
                 }
-                props.cacheState({ output: res.data.data });
+                props.cacheState({ output: res.data.data, query});
             }
         })
     }

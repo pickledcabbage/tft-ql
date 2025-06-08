@@ -1,12 +1,9 @@
 import { Box, } from "@mui/material";
 import { ReflexContainer, ReflexElement, ReflexSplitter } from "react-reflex";
 import 'react-reflex/styles.css';
-import QLToolbar from "./QLToolbar";
 import QLToolContainer from "./QLToolContainer";
 import { QLTool } from "./QLTool";
 import { useState } from "react";
-import path from "path";
-import { ConstructionOutlined } from "@mui/icons-material";
 import { createEmptySessionData, SessionData } from "./SessionData";
 import { TftSet } from "./TftSet";
 
@@ -41,9 +38,12 @@ export default function Workspace() {
     const [focusedPath, setFocusedPath] = useState<Array<number> | null>(null);
     const [tftSet, setTftSset] = useState<TftSet>({set_id: 'TFTSet14'});
 
+    console.log(JSON.stringify(state));
+    console.log(JSON.stringify(Object.fromEntries(toolStateCache)));
+
     // Helpers for finding nodes.
     const findNode = (node: QLToolNode, path: Array<number>): QLToolNode | null => {
-        if (path.length == 0) {
+        if (path.length === 0) {
             return node;
         }
         const loc = path[0];
@@ -56,7 +56,7 @@ export default function Workspace() {
     const replaceTool = (path: Array<number>, new_tool: QLTool) => {
         const new_state = structuredClone(state);
         const node = findNode(new_state, path);
-        if (node != null && node.type == 'tool') {
+        if (node != null && node.type === 'tool') {
             node.tool = new_tool;
         }
         setState(new_state);
@@ -65,7 +65,7 @@ export default function Workspace() {
     // Splits a node vertically or horizontally.
     const splitNode = (path: Array<number>, direction: 'horizontal' | 'vertical', tool: QLTool = QLTool.QUERY) => {
         // The case where there is only one node.
-        if (path.length == 0) {
+        if (path.length === 0) {
             const new_state = {
                 type: direction,
                 children: [
@@ -84,11 +84,11 @@ export default function Workspace() {
         const new_state = structuredClone(state);
         const parentNode = findNode(new_state, path.slice(0, -1));
         const loc = path[path.length - 1];
-        if (parentNode == null || loc >= parentNode.children.length) {
+        if (parentNode === null || loc >= parentNode.children.length) {
             return;
         }
         const nodeToSplit = parentNode.children[loc];
-        if (parentNode.type == direction) {
+        if (parentNode.type === direction) {
             // If same direction then interleave the new node.
             // 0 1 2 if loc = 1, then slice(0, loc) + new_node + slice(loc+1);
             const front = parentNode.children.slice(0, loc+1);
@@ -121,20 +121,20 @@ export default function Workspace() {
     const closeNode = (path: Array<number>) => {
         const new_state = structuredClone(state);
         const closeNodeRec = (node: QLToolNode, path: Array<number>) => {
-            if (path.length == 0) return;
+            if (path.length === 0) return;
             const loc = path[0];
             if (loc >= node.children.length) {
                 return;
             }
             closeNodeRec(node.children[loc], path.slice(1));
-            if (path.length == 1 || node.children[loc].children.length == 0) {
+            if (path.length === 1 || node.children[loc].children.length === 0) {
                 node.children = node.children.slice(0, loc).concat(node.children.slice(loc+1));
             }
 
         }
         closeNodeRec(new_state, path);
         // If we deleted up to the last node.
-        if (path.length == 0 || new_state.children.length == 0) {
+        if (path.length === 0 || new_state.children.length === 0) {
             setState({
                 type: 'tool',
                 tool: QLTool.QUERY,
@@ -154,7 +154,7 @@ export default function Workspace() {
 
     // Allows a container to request focus.
     const requestFocus = (path: Array<number> | null) => {
-        if (path == null) return;
+        if (path === null) return;
         setFocusedPath(path);
     }
 
@@ -167,9 +167,9 @@ export default function Workspace() {
             node = node.children[i];
         }
         console.log(node)
-        while (node.type != 'tool') {
+        while (node.type !== 'tool') {
             console.log(node.children.length)
-            if (node.children.length == 0) return null;
+            if (node.children.length === 0) return null;
             node = node.children[0];
             newPath.push(0);
         }
@@ -178,12 +178,12 @@ export default function Workspace() {
 
     // Moves tab focus. Does not change focus if valid path is not found.
     const moveFocus = (path: Array<number>, direction: 'left' | 'right' | 'up' | 'down') => {
-        if (path.length == 0) {
+        if (path.length === 0) {
             return;
         }
         const parentPath = path.slice(0, -1)
         const parentNode = findNode(state, parentPath);
-        if (parentNode == null) {
+        if (parentNode === null) {
             return;
         }
         
@@ -191,22 +191,22 @@ export default function Workspace() {
         const vertMove = ['up', 'down'].includes(direction);
         const idx = path[0];
         // A "vertical" node means it is split vertically but its orientation is horizontal.
-        if (parentNode.type == 'tool' || (horizMove && parentNode.type != 'vertical') || (vertMove && parentNode.type != 'horizontal')) {
+        if (parentNode.type === 'tool' || (horizMove && parentNode.type !== 'vertical') || (vertMove && parentNode.type !== 'horizontal')) {
             // Go to parent.
             moveFocus(parentPath, direction);
             return;
         }
         if (horizMove) {
-            const newIdx = idx + (direction == 'left' ? -1 : 1);
-            if (newIdx == -1 || parentNode.children.length <= newIdx) {
+            const newIdx = idx + (direction === 'left' ? -1 : 1);
+            if (newIdx === -1 || parentNode.children.length <= newIdx) {
                 // Go to parent.
                 moveFocus(parentPath, direction);
                 return;
             }
             requestFocus(findFirstToolPath(parentPath.concat([newIdx])));
         } else {
-            const newIdx = idx + (direction == 'up' ? -1 : 1);
-            if (newIdx == -1 || parentNode.children.length <= newIdx) {
+            const newIdx = idx + (direction === 'up' ? -1 : 1);
+            if (newIdx === -1 || parentNode.children.length <= newIdx) {
                 // Go to parent.
                 moveFocus(parentPath, direction);
                 return;
@@ -218,10 +218,10 @@ export default function Workspace() {
     // Generates the containers.
     const createReflexContainers = (node?: QLToolNode, path?: Array<number>) => {
         if (node == null || path == null) return (<div />);
-        if (node.type == 'tool' && node.tool != null) {
+        if (node.type === 'tool' && node.tool != null) {
             const isFocused = focusedPath != null && pathsAreEqual(focusedPath, path);
             return (<QLToolContainer moveFocus={moveFocus} isFocused={isFocused} requestFocus={requestFocus} sessionData={sessionData} setSessionData={setSessionData} cachedState={toolStateCache.get(path.join(':'))} cacheState={cacheState} tool={node.tool} containerPath={path} replaceTool={replaceTool} splitNode={splitNode} closeNode={closeNode} />)
-        } else if ((node.type == 'vertical' || node.type == 'horizontal') && node.children != null) {
+        } else if ((node.type === 'vertical' || node.type === 'horizontal') && node.children != null) {
             const elements = node.children.map((value, index) => (
                 <ReflexElement className={index.toString()}>
                     {createReflexContainers(value, path.concat([index]))}
@@ -229,7 +229,7 @@ export default function Workspace() {
             ));
             let interleaved: Array<JSX.Element> = [];
             for (let i = 0; i < elements.length; ++i) {
-                if (i != 0) interleaved.push(<ReflexSplitter/>);
+                if (i !== 0) interleaved.push(<ReflexSplitter/>);
                 interleaved.push(elements[i]);
             }
             return (

@@ -1,4 +1,4 @@
-import { Box, Card, TextField } from "@mui/material";
+import { Card, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
 import { ENDPOINT } from "./Config";
 import { SessionData } from "./SessionData";
@@ -29,14 +29,14 @@ export default function QLToolRaw(props: Props) {
 
     useEffect(
         () => {
-            if (props.cachedState?.query != null && props.cachedState.query != query) {
+            if (props.cachedState?.query != null && props.cachedState.query !== query) {
                 setQuery(query);
             }
-            if (props.cachedState?.output != null && props.cachedState.output != output) {
+            if (props.cachedState?.output != null && props.cachedState.output !== output) {
                 setOutput(output);
             }
         },
-        [props.cachedState]
+        [props.cachedState, output, query]
     )
 
     const fetchData = () => {
@@ -63,7 +63,7 @@ export default function QLToolRaw(props: Props) {
                 } else {
                     setOutput(res.data.data);
                 }
-                props.cacheState({ output: res.data.data });
+                props.cacheState({ query });
             }
         })
     }
