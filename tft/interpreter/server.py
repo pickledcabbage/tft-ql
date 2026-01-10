@@ -202,8 +202,6 @@ def get_item_aliases(tft_set: str, alias_type: str):
     }
 
 
-
-
 if __name__ == '__main__':
     # Flask server hates multiprocessing's pool.
     print('Warming caches. Flask server hates multiprocessing otherwise.')

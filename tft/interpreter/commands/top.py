@@ -44,8 +44,8 @@ class TopCommand(Command):
     @override
     def render(self, outputs: Any = None) -> str:
         top_comps = outputs
-        id_field = CompClusterField('Id', ql.idx('cluster'), length=3)
-        comp_name_field = CompNameField('Name', ql.idx('name'), length=84)
+        id_field = CompClusterField('Id', ql.idx('cluster'), length=5)
+        comp_name_field = CompNameField('Name', ql.idx('name'), length=82)
         champ_list_field = ChampionListField('Champions', ql.idx('units'), length=90, stars=ql.idx('stars'))
         avg_place = AvgPlaceField('Avg Place', ql.idx('avg_place'))
         games = GamesPlayedField('Games', ql.idx('games'))
