@@ -15,6 +15,10 @@ from flask import Flask, request
 from flask_cors import CORS, cross_origin
 
 from tft.config import DB, IP, PORT
+from tft.queries.aliases import add_alias
+from tft.queries.comps import query_top_comps
+from tft.queries.comp_traits import compute_comp_traits
+from tft.ql.util import match_score
 
 app = Flask(__name__)
 cors = CORS(app) # allow CORS for all domains on all routes.
@@ -198,6 +202,79 @@ def get_item_aliases(tft_set: str, alias_type: str):
             {'alias': i['alias'], 'value': i['value']} for i in client.find({'set': tft_set, 'type': alias_type})
         ]
     }
+
+
+@app.route('/alias/add', methods=['POST'])
+@cross_origin()
+def add_alias_endpoint():
+    '''Adds a new alias for an API ID.'''
+    data = request.get_json()
+    api_id = data.get('api_id')
+    alias = data.get('alias')
+    alias_type = data.get('type')
+
+    if not api_id or not alias or not alias_type:
+        return {'success': False, 'error': 'Missing required fields: api_id, alias, type'}
+
+    if alias_type not in ['champ', 'item', 'trait']:
+        return {'success': False, 'error': 'Invalid type. Must be: champ, item, or trait'}
+
+    success = add_alias(api_id, alias, alias_type)
+    if success:
+        return {'success': True}
+    else:
+        return {'success': False, 'error': 'Alias already exists'}
+
+
+@app.route('/api_ids/<alias_type>', methods=['GET'])
+@cross_origin()
+def get_api_ids(alias_type: str):
+    '''Gets all valid API IDs for a given type.'''
+    all_set_data = ql.query(meta.get_set_data())
+
+    if alias_type == 'item':
+        items = all_set_data.idx('items').map(ql.idx('apiName')).eval()
+        return {'api_ids': items}
+    elif alias_type == 'champ':
+        champs = all_set_data.idx('units').filter(ql.idx('traits').length().gt(0)).map(ql.idx('apiName')).eval()
+        return {'api_ids': champs}
+    elif alias_type == 'trait':
+        traits = all_set_data.idx('traits').filter(ql.contains('units')).map(ql.idx('apiName')).eval()
+        return {'api_ids': traits}
+    else:
+        return {'error': 'Invalid type. Must be: champ, item, or trait'}
+
+
+@app.route('/top_comps', methods=['GET'])
+@cross_origin()
+def get_top_comps():
+    """
+    Endpoint to fetch top compositions filtered by champion API IDs.
+    WRITTEN BY CLAUDE
+
+    Args:
+        champ_ids: Comma-separated list of champion API IDs (e.g., TFT14_Vayne,TFT14_Jhin)
+
+    Returns:
+        dict: Contains 'comps' list with composition data
+    """
+    champ_ids_param = request.args.get('champ_ids', '')
+    champ_ids: list[str] = [c.strip() for c in champ_ids_param.split(',') if c.strip()]
+
+    top_comps = query_top_comps()
+
+    if len(champ_ids) > 0:
+        scoring_function = match_score(champ_ids)
+        top_comps = top_comps.filter(ql.idx('units').unary(scoring_function).eq(len(champ_ids)))
+
+    top_comps = top_comps.sort_by(ql.idx('games'), True).top(50)
+    result = top_comps.eval()
+
+    # Add traits to each composition
+    for comp in result:
+        comp['traits'] = compute_comp_traits(comp['units'])
+
+    return {'comps': result}
 
 
 if __name__ == '__main__':

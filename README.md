@@ -15,3 +15,6 @@ Note: don't forget to point `frontend/tft-frontend/src/Config.tsx` to your backe
 1. Install docker here: https://docs.docker.com/engine/install/ubuntu/
 2. Install mongoDB and CLI here: https://www.mongodb.com/docs/atlas/cli/current/install-atlas-cli/
 3. Run `sudo atlas deployments setup myLocalRs1 --type local --force` to create local deployment
+
+## Known Issues
+1. If you stop the backend server screen, it can become a daemon taking up the socket. You can use `lsof -n -P -i :10000` to find the program using the socket and kill it.

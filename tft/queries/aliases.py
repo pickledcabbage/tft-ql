@@ -82,4 +82,57 @@ for alias in ITEM_ALIASES:
     assert alias not in CHAMP_ALIASES, f"Overlapping alias: {alias}"
 
 # Maybe ensure some trait alias guidelines?
-    
+
+def get_alias_file(alias_type: str) -> str:
+    """Returns the file path for the given alias type."""
+    if alias_type == 'champ':
+        return CHAMP_ALIAS_FILE
+    elif alias_type == 'item':
+        return ITEM_ALIAS_FILE
+    elif alias_type == 'trait':
+        return TRAIT_ALIAS_FILE
+    else:
+        raise ValueError(f"Unknown alias type: {alias_type}")
+
+def get_alias_dict(alias_type: str) -> dict:
+    """Returns the alias dictionary for the given type."""
+    if alias_type == 'champ':
+        return get_champ_aliases()
+    elif alias_type == 'item':
+        return get_item_aliases()
+    elif alias_type == 'trait':
+        return get_trait_aliases()
+    else:
+        raise ValueError(f"Unknown alias type: {alias_type}")
+
+def write_aliases_to_file(alias_type: str):
+    """Writes all aliases back to the CSV file for the given type."""
+    alias_dict = get_alias_dict(alias_type)
+    file_path = get_alias_file(alias_type)
+
+    # Invert the dictionary: group aliases by API ID
+    api_to_aliases = {}
+    for alias, api_id in alias_dict.items():
+        if api_id not in api_to_aliases:
+            api_to_aliases[api_id] = []
+        api_to_aliases[api_id].append(alias)
+
+    # Write to file
+    with open(file_path, 'w') as f:
+        for api_id, aliases in api_to_aliases.items():
+            f.write(f"{api_id},{','.join(aliases)}\n")
+
+def add_alias(api_id: str, alias: str, alias_type: str) -> bool:
+    """
+    Adds a new alias for the given API ID and type.
+    Returns True if successful, False if alias already exists.
+    """
+    alias = alias.lower().strip()
+    alias_dict = get_alias_dict(alias_type)
+
+    if alias in alias_dict:
+        return False
+
+    alias_dict[alias] = api_id
+    write_aliases_to_file(alias_type)
+    return True

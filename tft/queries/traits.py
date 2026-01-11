@@ -6,6 +6,12 @@ TRAIT_NAME_MAP: dict[str, str] = dict()
 def query_traits():
     """
     Returns a query for trait data.
+    Ex:
+    {'TFT16_Teamup_SingedTeemo': {'name': 'Poison Pals', 'levels': [2]},
+    'TFT16_XerathUnique': {'name': 'Ascendant', 'levels': [1]},
+    'TFT16_Freljord': {'name': 'Freljord', 'levels': [3, 5, 7]},
+    'TFT16_Juggernaut': {'name': 'Juggernaut', 'levels': [2, 4, 6]},
+    }
     """
     return ql.query(meta.get_set_data()).idx('traits').map(ql.sub({
         'name': ql.idx('name'),
