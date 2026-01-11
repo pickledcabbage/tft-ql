@@ -1,3 +1,5 @@
+# Contains a set of classes to easily create tables to render in a text format.
+
 from abc import abstractmethod
 from typing import Iterable, override
 import attrs
@@ -7,55 +9,21 @@ from tft.queries.augs import get_aug_name_map
 from tft.queries.champs import get_champ_name_map
 from tft.queries.items import get_item_name_map
 from tft.queries.traits import get_trait_name_map
-
-def coerce_item_name(name_or_uid: str) -> str:
-        item_name_map = get_item_name_map()
-        if name_or_uid not in item_name_map:
-            return name_or_uid
-        return item_name_map[name_or_uid]
-
-def coerce_champ_name(name_or_uid: str) -> str:
-    champ_name_map = get_champ_name_map()
-    if name_or_uid not in champ_name_map:
-        return name_or_uid
-    return champ_name_map[name_or_uid]
-
-def coerce_games_played(places) -> int:
-    if isinstance(places, list):
-        return sum(places)
-    return places
-
-def coerce_avg_place(places) -> float:
-    if isinstance(places, list):
-        return avg_place(places)
-    return places
-
-def coerce_trait_name(name_or_uid: str) -> str:
-    trait_name_map = get_trait_name_map()
-    if name_or_uid in trait_name_map:
-        return trait_name_map[name_or_uid]
-    return name_or_uid
-
-def coerce_augment_name(name_or_uid: str) -> str:
-    aug_name_map = get_aug_name_map()
-    if name_or_uid in aug_name_map:
-        return aug_name_map[name_or_uid]
-    return name_or_uid
-
-def coerce_wildcard(name_or_uid: str) -> str:
-    mappings = [get_aug_name_map(), get_trait_name_map(), get_champ_name_map(), get_item_name_map()]
-    for mapping in mappings:
-        if name_or_uid in mapping:
-            return mapping[name_or_uid]
-    return name_or_uid
+from tft.ql.coerce import *
 
 def adjust_field_to_size(s, length):
+    """
+    If a field is longer than its length, perform shortening.
+    """
     if len(s) > length:
         return s[:length-3] + "..."
     return s
 
 @attrs.define
 class Field:
+    """
+    A base field class which has its own associated query and field length.
+    """
     name: str = attrs.field()
     query: ql.BaseQuery = attrs.field()
     length: int = attrs.field()
@@ -83,6 +51,9 @@ class ItemNameField(Field):
 
 @attrs.define
 class ItemListField(Field):
+    """
+    Used to print a list of items.
+    """
     length: int = attrs.field(default=80)
     delim: str = attrs.field(default=', ')
     same_length: int | None = attrs.field(default=None)
@@ -176,7 +147,7 @@ class CostField(Field):
 
 @attrs.define
 class CompClusterField(Field):
-    length: int = attrs.field(default=3)
+    length: int = attrs.field(default=6)
 
     @override
     def _get(self, source: dict) -> str:

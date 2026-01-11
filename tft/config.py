@@ -5,11 +5,11 @@ with open("config/config.yaml", "r") as file:
 print("Loaded config", _config_file)
 
 # Server configs.
-DB = _config_file['backend']['db']
-IP = _config_file['backend']['ip']
-PORT = _config_file['backend']['port']
+DB = "mongodb://127.0.0.1:32769/?directConnection=true"
+IP = "0.0.0.0"
+PORT = 10000
 
 # Alias configs.
-CHAMP_ALIAS_FILE = _config_file['files']['champ_alias']
-ITEM_ALIAS_FILE = _config_file['files']['item_alias']
-TRAIT_ALIAS_FILE = _config_file['files']['trait_alias']
+CHAMP_ALIAS_FILE = "config/champ_aliases.csv"
+ITEM_ALIAS_FILE = "config/item_aliases.csv"
+TRAIT_ALIAS_FILE = "config/trait_aliases.csv"

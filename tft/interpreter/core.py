@@ -3,6 +3,7 @@ poetry run python tft/interpreter/core.py
 """
 # Import all commands and registry.
 import argparse
+import readline
 import tft.client.meta as meta
 import tft.interpreter.commands.api as commands
 from tft.interpreter.commands.registry import ValidationException

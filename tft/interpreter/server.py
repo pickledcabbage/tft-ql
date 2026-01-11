@@ -5,8 +5,6 @@ poetry run python tft/interpreter/server.py
 import pymongo
 import pandas as pd
 import uuid
-import time
-import attrs
 import random
 import tft.client.meta as meta
 import tft.interpreter.commands.api as commands

@@ -1,0 +1,63 @@
+"""Syncs config/config.yaml to frontend and backend config files.
+
+Usage:
+    python scripts/sync_config.py
+"""
+import yaml
+
+CONFIG_PATH = "config/config.yaml"
+FRONTEND_CONFIG_PATH = "frontend/tft-frontend/src/Config.tsx"
+BACKEND_CONFIG_PATH = "tft/config.py"
+
+
+def read_config():
+    with open(CONFIG_PATH, "r") as f:
+        return yaml.safe_load(f)
+
+
+def write_frontend_config(config):
+    # Extract host from frontend endpoint, combine with backend port.
+    frontend_endpoint = config["frontend"]["endpoint"]
+    # Parse out the host (e.g., "http://172.30.111.252:9001" -> "172.30.111.252")
+    host = frontend_endpoint.split("://")[1].split(":")[0]
+    backend_port = config["backend"]["port"]
+    endpoint = f"http://{host}:{backend_port}"
+
+    content = f"export const ENDPOINT = '{endpoint}'\n"
+
+    with open(FRONTEND_CONFIG_PATH, "w") as f:
+        f.write(content)
+    print(f"Wrote frontend config to {FRONTEND_CONFIG_PATH}")
+
+
+def write_backend_config(config):
+    backend = config["backend"]
+    files = config["files"]
+
+    content = f'''import yaml
+
+with open("{CONFIG_PATH}", "r") as file:
+    _config_file = yaml.safe_load(file)
+print("Loaded config", _config_file)
+
+# Server configs.
+DB = "{backend['db']}"
+IP = "{backend['ip']}"
+PORT = {backend['port']}
+
+# Alias configs.
+CHAMP_ALIAS_FILE = "{files['champ_alias']}"
+ITEM_ALIAS_FILE = "{files['item_alias']}"
+TRAIT_ALIAS_FILE = "{files['trait_alias']}"
+'''
+
+    with open(BACKEND_CONFIG_PATH, "w") as f:
+        f.write(content)
+    print(f"Wrote backend config to {BACKEND_CONFIG_PATH}")
+
+
+if __name__ == "__main__":
+    config = read_config()
+    write_frontend_config(config)
+    write_backend_config(config)
+    print("Config sync complete!")

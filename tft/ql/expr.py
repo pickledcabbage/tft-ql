@@ -202,7 +202,7 @@ class Negate(Transform):
         return not m
 
 @define
-class Any(Transform):
+class _Any(Transform):
     queries: Iterable[Query] = field()
 
     @override
@@ -482,7 +482,7 @@ class BaseQuery(Query):
         return self._evolve(All(queries))
     
     def any(self, queries: Iterable[Query]) -> Self:
-        return self._evolve(Any(queries))
+        return self._evolve(_Any(queries))
     
 
     # END Transforms.

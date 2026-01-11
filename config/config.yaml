@@ -1,6 +1,6 @@
 # Need to sync this to the frontend.
 frontend:
-  endpoint: 'http://172.30.111.252:9001'
+  endpoint: 'http://127.0.0.1:10000'
 
 backend:
   ip: '0.0.0.0'
