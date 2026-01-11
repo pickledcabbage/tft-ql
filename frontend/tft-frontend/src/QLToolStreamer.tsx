@@ -50,7 +50,6 @@ export default function QLToolStreamer(props: Props) {
                         const events = res.data.events as Array<{
                             user_id: string, ts: number, tool: string, data: string
                         }>
-                        console.log(events)
                         if (connected == null || !connected || !events) return;
                         const events_array = events.sort((a: any, b: any) => (a.ts - b.ts));
                         if (events_array.length == 0) return;

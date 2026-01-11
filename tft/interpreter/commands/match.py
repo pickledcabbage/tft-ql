@@ -44,7 +44,7 @@ class MatchCommand(Command):
         if field_filter is not None and field_filter['value'] in ['match_score', 'games', 'level', 'avg_place']:
             early_comps = early_comps.sort_by(ql.idx(field_filter['value']), field_filter['direction'] == 'DES')
         else:
-            early_comps = early_comps.sort_by(ql.idx('match_score'), True).top(10)
+            early_comps = early_comps.sort_by(ql.idx('match_score'), True)
 
         return early_comps.eval()
 

@@ -36,7 +36,7 @@ export default function Workspace() {
     const [toolStateCache, setToolStateCache] = useState<Map<string, any>>(new Map());
     const [sessionData, setSessionData] = useState<SessionData>(createEmptySessionData());
     const [focusedPath, setFocusedPath] = useState<Array<number> | null>(null);
-    const [tftSet, setTftSset] = useState<TftSet>({set_id: 'TFTSet14'});
+    const [tftSet, setTftSset] = useState<TftSet>({set_id: 'TFTSet16'});
 
     console.log(JSON.stringify(state));
     console.log(JSON.stringify(Object.fromEntries(toolStateCache)));
