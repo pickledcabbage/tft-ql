@@ -208,7 +208,10 @@ def get_item_aliases(tft_set: str, alias_type: str):
 @app.route('/alias/add', methods=['POST'])
 @cross_origin()
 def add_alias_endpoint():
-    '''Adds a new alias for an API ID.'''
+    '''
+    Adds a new alias for an API ID.
+    @Deprecated
+    '''
     data = request.get_json()
     api_id = data.get('api_id')
     alias = data.get('alias')
@@ -230,7 +233,10 @@ def add_alias_endpoint():
 @app.route('/api_ids/<alias_type>', methods=['GET'])
 @cross_origin()
 def get_api_ids(alias_type: str):
-    '''Gets all valid API IDs for a given type.'''
+    '''
+    Gets all valid API IDs for a given type.
+    @Deprecated
+    '''
     all_set_data = ql.query(meta.get_set_data())
 
     if alias_type == 'item':

@@ -109,21 +109,37 @@ class MetaTFTClient:
         return COMP_CACHE[cid]
 
 def create_client(local_cache: bool = False):
+    """
+    Factory function for creating your own MetaTFT singleton. If the param
+    `local_cache` is true, then it pulls from disk if it exists.
+    """
     global CLIENT
     CLIENT = MetaTFTClient(local_cache)
 
 def get_client():
+    """
+    Gets or creates a singleton of the MetaTFT client and returns it.
+    """
     if CLIENT is not None:
         return CLIENT
     return MetaTFTClient()
 
 def get_set_data():
+    """
+    Fetches raw JSON set data via MetaTFT client singleton.
+    """
     return get_client().fetch(MetaTFTApis.SET_DATA)
 
 def get_comp_data():
+    """
+    Fetches raw JSON comp data via MetaTFT client singleton.
+    """
     return get_client().fetch(MetaTFTApis.COMPS_DATA)
 
 def get_champ_item_data(champ_id: str | None = None):
+    """
+    Fetches raw JSON chamption specific data via MetaTFT client singleton.
+    """
     client = get_client()
     if champ_id is None:
         return client.fetch(MetaTFTApis.CHAMP_ITEMS)
@@ -131,6 +147,9 @@ def get_champ_item_data(champ_id: str | None = None):
         return {champ_id: client.fetch_champ(champ_id)}
 
 def get_comp_details(cid: str | int | None = None):
+    """
+    Fetches raw JSON composition (or cluster) data via MetaTFT client singleton.
+    """
     client = get_client()
     if cid is None:
         return client.fetch(MetaTFTApis.COMP_DETAILS)
