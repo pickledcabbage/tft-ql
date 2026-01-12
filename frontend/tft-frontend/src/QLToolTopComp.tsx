@@ -168,7 +168,7 @@ export default function QLToolTopComp(props: Props) {
     // Handle CTRL+Enter keyboard shortcut
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === 'Enter') {
+            if (event.ctrlKey && event.key === 'Enter' && props.isFocused) {
                 fetchComps();
             }
         };

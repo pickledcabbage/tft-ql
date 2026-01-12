@@ -18,7 +18,8 @@ from tft.config import DB, IP, PORT
 from tft.queries.aliases import add_alias
 from tft.queries.comps import query_top_comps
 from tft.queries.comp_traits import compute_comp_traits
-from tft.ql.util import match_score
+from tft.queries.items import get_item_name_map, get_recipes
+from tft.ql.util import built_from, match_score, count_match_score
 
 app = Flask(__name__)
 cors = CORS(app) # allow CORS for all domains on all routes.
@@ -275,6 +276,62 @@ def get_top_comps():
         comp['traits'] = compute_comp_traits(comp['units'])
 
     return {'comps': result}
+
+
+@app.route('/bis', methods=['GET'])
+@cross_origin()
+def get_best_in_slot():
+    """
+    Endpoint to fetch best in slot items for a champion.
+    WRITTEN BY CLAUDE
+
+    Args:
+        champ_id: Champion API ID (e.g., TFT16_Teemo)
+        item_ids: Comma-separated list of component item API IDs
+
+    Returns:
+        dict: Contains 'builds' list with item build data
+    """
+    champ_id = request.args.get('champ_id', '')
+    if not champ_id:
+        return {'builds': [], 'error': 'champ_id is required'}
+
+    item_ids_param = request.args.get('item_ids', '')
+    item_ids: list[str] = [i.strip() for i in item_ids_param.split(',') if i.strip()]
+
+    # Query champion build data
+    q = ql.query(meta.get_champ_item_data(champ_id)).idx(f"{champ_id}.builds").map(ql.sub({
+        'items': ql.idx('buildNames').split('|'),
+        'places': ql.idx('places')
+    }))
+
+    # Filter for valid builds (items in name map, 1-3 items)
+    q = q.filter(ql.all([
+        ql.idx('items').map(ql.in_set(get_item_name_map())).unary(all),
+        ql.idx('items').len().gt(0),
+        ql.idx('items').len().lt(4)
+    ]))
+
+    # If items provided, filter by component matching
+    if len(item_ids) > 0:
+        def components_or_self(item: str) -> list[str]:
+            if item in get_recipes():
+                return get_recipes()[item]
+            return [item]
+        
+        q = q.filter(ql.idx('items').unary(built_from(item_ids))).filter(ql.idx('items').len().eq(3))
+
+    # Sort by total games and get top 20
+    result = q.sort_by(ql.idx('places').unary(sum), True).top(100).eval()
+
+    # Compute avg_place and games from places array
+    for build in result:
+        places = build['places']
+        total = sum(places)
+        build['games'] = total
+        build['avg_place'] = sum((i + 1) * x / total for i, x in enumerate(places)) if total > 0 else 0
+
+    return {'builds': result}
 
 
 if __name__ == '__main__':

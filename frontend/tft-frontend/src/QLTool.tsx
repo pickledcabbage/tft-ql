@@ -4,7 +4,8 @@ export enum QLTool {
     HOME = 'home',
     STREAMER = 'streamer',
     ALIAS_ADDER = 'alias_adder',
-    TOP_COMP = 'top_comp'
+    TOP_COMP = 'top_comp',
+    BIS = 'bis'
 }
 
 // If you want a nice tab name for it, add it here.
@@ -14,4 +15,5 @@ export const NAME_MAP = new Map<QLTool, string>([
     [QLTool.STREAMER, "Session Events"],
     [QLTool.ALIAS_ADDER, "Alias Adder"],
     [QLTool.TOP_COMP, "Top Comps"],
+    [QLTool.BIS, "Best In Slot"],
 ]);

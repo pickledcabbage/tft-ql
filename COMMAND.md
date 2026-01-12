@@ -1,16 +1,11 @@
-We will be working on a new feature which computes the trait levels for a particular comp.
+We will be creating a tool for the UI called "Best In Slot" or "bis" that is UI version of terminal interpreter command in tft/commands/best_in_slot.py.
 
-The function `query_traits` in tft/queries/traits.py pulls data in the followin form:
-"""
-{'TFT16_Teamup_SingedTeemo': {'name': 'Poison Pals', 'levels': [2]},
- 'TFT16_XerathUnique': {'name': 'Ascendant', 'levels': [1]},
- 'TFT16_Freljord': {'name': 'Freljord', 'levels': [3, 5, 7]},
- 'TFT16_Juggernaut': {'name': 'Juggernaut', 'levels': [2, 4, 6]},
-}
-"""
+A great example of a previously written tool is QLToolTopComp.tsx.
 
-Write a function in tft/queries/comp_traits.py which is given an Iterable of champion API IDs. It computes every champions contribution to each trait and computes the level of that trait that is active for the composition. For example having 2 juggernauts activates level 2 of the trait 'TFT16_Juggernaut'. However adding another juggernaut, won't increase it to 3 because the next level starts at 4. This function should return a list of tuples (API ID of the trait and the level of the trait) ordered in descending order by trait level.
-
-After you finishing writing this function. Add it to the TopComp API endpoint in tft/interpreter/server.py and include it in the response for every single composition.
-
-Finally add a new column to the QLToolTopComp which shows all of the traits (and their levels) for the comp. Each trait and level should be on their own line.
+This tool should do the following:
+1. Have a single selector for champions that lets you type and in will autocomplete the champion name (similar to QLToolTopComp's search bar, but in this case we can only select one champion). The search should by name not by API ID.
+2. Have a multiselector where you can select items that you currently have. Similar to the QLToolTopComp's multiselector with autocomplete typing.
+3. A submit button to submit the selected data to the server. You should be able to press CTRL + Enter to submit the button in the tool.
+4. When you press CTRL + W it should focus on the champion selector, letting you search for a new champion.
+5. A new endpoint should be created in tft/interpreter/server.py which receives the submitted data (the data should all be API IDs) and it should return a list of the top items with each item group having average place and number of games. It must include items that were passed to the endpoint or can build from the passed components. The function `get_recipes()` from tft/queries/items.py returns the recipe for each item that can be built. It is possible there is less than 3 completed items.
+6. The data should be rendered in the UI tool in the form of a table. With columns: Item 1, Item 2, Item 3, Average Place, Games Played. The table should be sortable by average place and games played.

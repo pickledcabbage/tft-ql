@@ -12,6 +12,7 @@ import { SessionData } from "./SessionData";
 import QLToolStreamer from "./QLToolStreamer";
 import QLToolAliasAdder from "./QLToolAliasAdder";
 import QLToolTopComp from "./QLToolTopComp";
+import QLToolBIS from "./QLToolBIS";
 import { useFocusManager, useFocusWithin } from 'react-aria';
 
 const styles = {
@@ -127,6 +128,8 @@ export default function QLToolContainer(props: Props) {
                 return <QLToolAliasAdder />
             case QLTool.TOP_COMP:
                 return <QLToolTopComp sessionData={props.sessionData} cachedState={props.cachedState} cacheState={(state: any) => props.cacheState(props.containerPath, state)} isFocused={props.isFocused} />
+            case QLTool.BIS:
+                return <QLToolBIS sessionData={props.sessionData} cachedState={props.cachedState} cacheState={(state: any) => props.cacheState(props.containerPath, state)} isFocused={props.isFocused} />
             default:
                 throw new Error('Invalid tool type: ' + tool);
         }

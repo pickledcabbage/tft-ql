@@ -4,6 +4,8 @@
 from collections import defaultdict
 from typing import Any, Callable, Iterable
 
+from tft.queries.items import get_components, get_recipes
+
 
 def splay(m: Any, layer: int = 0, depth: int | None =None) -> None:
     """
@@ -81,3 +83,46 @@ def count_match_score(search_params: Iterable) -> Callable[[Iterable[str]], int]
         
         return count
     return compare
+
+def built_from(search_params: Iterable[str]) -> Callable[[Iterable[str]], bool]:
+    """
+    Returns a function which returns true if a passed list of items can be
+    built from search params.
+    """
+
+    def compare(items: Iterable[str]) -> bool:
+        # First directly match items.
+        items_to_match = list(search_params) 
+        missing_items = set() # Items we didn't match yet.
+        components = get_components()
+        recipes = get_recipes()
+        for item in items:
+            if item in items_to_match:
+                items_to_match.remove(item)
+            else:
+                missing_items.add(item)
+        
+        # Check if any components are left.
+        if any(item not in components for item in items_to_match):
+            return False
+        
+        matched_components = defaultdict(int)
+        # Break missing items down.
+        for item in missing_items:
+            if item not in recipes:
+                return False
+            for component in recipes[item]:
+                matched_components[component] += 1
+        # Check if components match.
+        for item in items_to_match:
+            if item not in matched_components:
+                return False
+            if matched_components[item] == 0:
+                return False
+            matched_components[item] -= 1
+        
+        return True
+    
+    return compare
+
+
