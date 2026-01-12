@@ -1,8 +1,8 @@
 import { Card, Typography } from "@mui/material";
-import { SessionData } from "./SessionData";
+import { SessionData } from "../SessionData";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { ENDPOINT } from "./Config";
+import { ENDPOINT } from "../Config";
 
 const styles = {
     eventLog: {

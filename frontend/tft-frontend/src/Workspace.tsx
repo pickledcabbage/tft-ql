@@ -242,7 +242,6 @@ export default function Workspace() {
 
     return (
         <Box sx={styles.background}>
-            {/* <QLToolbar /> */}
             {createReflexContainers(state, [])}
         </Box>
     );

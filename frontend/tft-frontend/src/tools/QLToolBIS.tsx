@@ -20,9 +20,9 @@ import {
     Typography
 } from "@mui/material";
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { ENDPOINT } from "./Config";
+import { ENDPOINT } from "../Config";
 import axios from "axios";
-import { SessionData } from "./SessionData";
+import { SessionData } from "../SessionData";
 
 /**
  * Champion type from /set_info endpoint.

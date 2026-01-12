@@ -1,7 +1,7 @@
 import { Box, Button, TextField, Typography } from "@mui/material"
-import { createEmptySessionData, SessionData } from "./SessionData"
+import { createEmptySessionData, SessionData } from "../SessionData"
 import { useEffect, useState } from "react";
-import { ENDPOINT } from "./Config";
+import { ENDPOINT } from "../Config";
 import axios from "axios";
 
 const styles = {

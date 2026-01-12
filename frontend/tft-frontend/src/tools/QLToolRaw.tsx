@@ -1,7 +1,7 @@
 import { Card, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
-import { ENDPOINT } from "./Config";
-import { SessionData } from "./SessionData";
+import { ENDPOINT } from "../Config";
+import { SessionData } from "../SessionData";
 import axios from "axios";
 
 const styles = {

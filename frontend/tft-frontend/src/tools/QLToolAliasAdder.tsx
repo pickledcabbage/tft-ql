@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Button, Card, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import { useEffect, useState } from "react";
-import { ENDPOINT } from "./Config";
+import { ENDPOINT } from "../Config";
 import axios from "axios";
 
 const styles = {

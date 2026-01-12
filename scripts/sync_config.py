@@ -1,4 +1,12 @@
-"""Syncs config/config.yaml to frontend and backend config files.
+"""
+Syncs config/config.yaml to frontend and backend config files.
+WRITTEN BY CLAUDE
+
+TODO: This file is kinda shit, but not worth changing.
+Reasons:
+1. For the backend it should just read the YAML directly and expose each field.
+2. For the frontend it should compute the backend's endpoint instead of storing its own.
+3. Set data should also be included in the config.
 
 Usage:
     python scripts/sync_config.py

@@ -4,15 +4,15 @@ import CloseIcon from '@mui/icons-material/Close';
 import HorizontalSplitIcon from '@mui/icons-material/HorizontalSplit';
 import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import SearchIcon from '@mui/icons-material/Search';
-import QLToolRaw from "./QLToolRaw";
+import QLToolRaw from "./tools/QLToolRaw";
 import React, { useEffect, useRef, useState } from "react";
 import OpenQLToolModal from "./OpenQLToolModal";
-import QLToolHome from "./QLToolHome";
+import QLToolHome from "./tools/QLToolHome";
 import { SessionData } from "./SessionData";
-import QLToolStreamer from "./QLToolStreamer";
-import QLToolAliasAdder from "./QLToolAliasAdder";
-import QLToolTopComp from "./QLToolTopComp";
-import QLToolBIS from "./QLToolBIS";
+import QLToolStreamer from "./tools/QLToolStreamer";
+import QLToolAliasAdder from "./tools/QLToolAliasAdder";
+import QLToolTopComp from "./tools/QLToolTopComp";
+import QLToolBIS from "./tools/QLToolBIS";
 import { useFocusManager, useFocusWithin } from 'react-aria';
 
 const styles = {
