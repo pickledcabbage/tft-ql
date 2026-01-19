@@ -4,7 +4,7 @@
 ./stop.sh
 
 # Sync config files
-python scripts/sync_config.py
+python3 scripts/sync_config.py
 
 # Start frontend in a screen session
 screen -dmS ql_frontend bash -c "cd frontend/tft-frontend && npm start"
