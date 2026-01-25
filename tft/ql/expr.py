@@ -80,10 +80,6 @@ class Map(Transform):
                 return {key: self.query.eval(val) for key, val in m.items()}
         else:
             raise Exception(f"Mapping incorrect type: {type(m)}")
-    
-    # @override
-    # def get_type(self) -> TransformType:
-    #     return TransformType.MULTI
 
 @define
 class Top(Transform):

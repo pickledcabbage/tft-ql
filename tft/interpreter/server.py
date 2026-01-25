@@ -343,7 +343,11 @@ def get_best_in_slot():
 if __name__ == '__main__':
     # Flask server hates multiprocessing's pool.
     print('Warming caches. Flask server hates multiprocessing otherwise.')
-    commands.COMMAND_REGISTRY['warm'].execute()
+    meta.create_client(meta.MetaTFTClientType.ONLINE_AND_OFFLINE)
+    meta.get_comp_data()
+    meta.get_champ_item_data()
+    meta.get_set_data()
+    meta.get_comp_details()
     print('Caches warmed, starting server.')
 
     app.run(host=IP, port=PORT)

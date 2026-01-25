@@ -11,3 +11,7 @@ files:
   champ_alias: 'config/champ_aliases.csv'
   item_alias: 'config/item_aliases.csv'
   trait_alias: 'config/trait_aliases.csv'
+
+tft:
+  set: 'TFTSet16'
+  cluster_id: 384
