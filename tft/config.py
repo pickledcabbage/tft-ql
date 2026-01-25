@@ -16,4 +16,6 @@ TRAIT_ALIAS_FILE = "config/trait_aliases.csv"
 
 # Data configs.
 TFT_SET = "TFTSet16"
-CLUSTER_ID = 384
+CLUSTER_ID = 386
+DAYS = 1
+RANK = ['CHALLENGER', 'DIAMOND', 'EMERALD', 'MASTER', 'PLATINUM']

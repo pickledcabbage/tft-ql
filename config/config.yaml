@@ -14,4 +14,13 @@ files:
 
 tft:
   set: 'TFTSet16'
-  cluster_id: 384
+  cluster_id: 386
+  days: 1
+  patch: 'current'
+  # Supported ranks: BRONZE,CHALLENGER,DIAMOND,EMERALD,GOLD,GRANDMASTER,IRON,MASTER,PLATINUM,RANKUNKNOWN,SILVER
+  ranks:
+    - 'CHALLENGER'
+    - 'DIAMOND'
+    - 'EMERALD'
+    - 'MASTER'
+    - 'PLATINUM'

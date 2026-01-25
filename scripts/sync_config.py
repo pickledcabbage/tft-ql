@@ -67,6 +67,8 @@ TRAIT_ALIAS_FILE = "{files['trait_alias']}"
 # Data configs.
 TFT_SET = "{tft["set"]}"
 CLUSTER_ID = {tft["cluster_id"]}
+DAYS = {tft["days"]}
+RANK = {tft["ranks"]}
 '''
 
     with open(BACKEND_CONFIG_PATH, "w") as f:

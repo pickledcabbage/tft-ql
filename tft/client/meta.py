@@ -6,7 +6,7 @@ import attrs
 import requests
 import tft.ql.expr as ql
 import multiprocessing
-from tft.config import CLUSTER_ID, TFT_SET
+from tft.config import CLUSTER_ID, TFT_SET, DAYS, RANK
 
 
 class MetaTFTApis(Enum):
@@ -131,7 +131,8 @@ class MetaTFTClient:
             params = {
                 "queue": 1100, # Not sure what this does.
                 "patch": "current",
-                "rank": "CHALLENGER,DIAMOND,GRANDMASTER,MASTER",
+                "days": DAYS,
+                "rank": ','.join(RANK),
                 "permit_filter_adjustment": True, # No clue here either.
                 "unit": champ_id
             }
@@ -145,7 +146,8 @@ class MetaTFTClient:
                 'comp': comp_id,
                 'cluster_id': cluster_id,
             }
-            COMP_CACHE[comp_id] = requests.get(URLS[MetaTFTApis.COMP_DETAILS], params=params).json()
+            res = requests.get(URLS[MetaTFTApis.COMP_DETAILS], params=params)
+            COMP_CACHE[comp_id] = res.json()
         return COMP_CACHE[comp_id]
 
 def create_client(client_type: MetaTFTClientType = MetaTFTClientType.ONLINE_ONLY):
